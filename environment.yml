@@ -1,4 +1,4 @@
-name: hsfm_ragmac_xdem
+name: gtsa
 channels:
   - conda-forge
   - oggm
