@@ -1,0 +1,25 @@
+name: hsfm_ragmac_xdem
+channels:
+  - conda-forge
+  - oggm
+dependencies:
+  - numpy
+  - scipy
+  - matplotlib
+  - toml
+  - pandas
+  - xdem
+  - rioxarray
+  - opencv
+  - oggm
+  - oggm-deps
+  - dask
+  - distributed
+  - zarr
+  - jupyterlab
+  - pip
+  # dev requirements
+  - pytest
+  - pip:
+    - -e "git+https://github.com/GlacioHack/GeoUtils.git@main#egg=geoutils"
+    - -e "git+https://github.com/GlacioHack/xdem.git@main#egg=xdem"
