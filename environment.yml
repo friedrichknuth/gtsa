@@ -18,6 +18,10 @@ dependencies:
   - zarr
   - jupyterlab
   - pip
+  - holoviews
+  - geoviews
+  - datashader
+  - gdown
   # dev requirements
   - pytest
   - pip:
