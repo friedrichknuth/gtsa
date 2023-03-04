@@ -222,7 +222,7 @@ def GPR_snow_kernel():
     return kernel
 
 
-def GPR_model(X_train, y_train, kernel, alpha=1e-10):
+def GPR_model(X_train, y_train, kernel, alpha=0.1):
     X_train = X_train.squeeze()[:, np.newaxis]
     y_train = y_train.squeeze()
 
@@ -244,7 +244,7 @@ def GPR_predict(gaussian_process_model, X):
 def GPR_run(args):
     X_train, y_train_masked_array, X, glacier_kernel = args
     X_train, y_train = remove_nan_from_training_data(X_train, y_train_masked_array)
-    gaussian_process_model = GPR_model(X_train, y_train, glacier_kernel, alpha=1e-10)
+    gaussian_process_model = GPR_model(X_train, y_train, glacier_kernel, alpha=0.1)
     prediction, std_prediction = GPR_predict(gaussian_process_model, X)
 
     return prediction

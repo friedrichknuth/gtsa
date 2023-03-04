@@ -50,7 +50,7 @@ results = temporal.GPR_run_parallel(X_train, valid_data, X, glacier_kernel)
 
 prediction_stack = temporal.GPR_reshape_parallel_results(results, test_stack, valid_mask_2D)
 
-np.savez_compressed('prediction_stack.npz', 
+np.savez_compressed('GPR_stack.npz', 
                     data=prediction_stack.data, 
                     mask=prediction_stack.mask)
 
