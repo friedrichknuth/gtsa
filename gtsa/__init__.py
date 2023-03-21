@@ -6,3 +6,4 @@ import gtsa.plotting
 import gtsa.utils
 import gtsa.temporal
 import gtsa.gdal
+import gtsa.geospatial

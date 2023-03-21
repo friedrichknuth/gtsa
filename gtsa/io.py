@@ -1,4 +1,4 @@
-import pathlib
+from pathlib import Path
 from datetime import datetime
 from subprocess import Popen, PIPE, STDOUT
 
@@ -29,6 +29,24 @@ def run_command(command, verbose=False, shell=False):
             
 def parse_timestamps(file_list):
     return [datetime.strptime(str(i)[-14:-4], "%Y-%m-%d") for i in file_list]
+
+def parse_hsfm_timestamps(file_list):
+    date_times = []
+    for i in file_list:
+        parts = i.name.split('_')
+        for p in parts:
+            if '-' in p:
+                date_times.append(p)
+                
+    return [datetime.strptime(i, "%Y-%m-%d") for i in date_times]
+
+def parse_earthdem_timestamps(file_list):
+    date_times = []
+    for i in file_list:
+        parts = i.name.split('_')
+        date_times.append(parts[1])
+                
+    return [datetime.strptime(i, "%Y%m%d") for i in date_times]
     
 def dask_start_cluster(nproc, threads=1, ip_addres=None, port=':8786'):
     """
@@ -128,7 +146,10 @@ def xr_stack_geotifs(geotif_files_list,
                      datetimes_list, 
                      reference_geotif_file, 
                      resampling="bilinear",
-                     save_to_nc=False):
+                     save_to_nc=False,
+                     nc_out_dir = None,
+                     overwrite = True,
+                    ):
 
     """
     Stack single or multi-band GeoTiFFs to reference_geotiff.
@@ -146,8 +167,10 @@ def xr_stack_geotifs(geotif_files_list,
     ds : xr.Dataset()
     """
 
+    if save_to_nc and nc_out_dir:
+        nc_out_dir = Path(nc_out_dir)
+        nc_out_dir.mkdir(parents=True, exist_ok=True)
     ## Check each geotiff has a datetime associated with it.
-    
     if len(datetimes_list) == len(geotif_files_list):
         pass
     else:
@@ -179,23 +202,32 @@ def xr_stack_geotifs(geotif_files_list,
 
     c = 0
     for index, file_name in enumerate(geotif_files_list):
-        src = xr_read_geotif(file_name)
-
-        if not check_xr_rio_ds_match(src, ref):
-            src = src.rio.reproject_match(ref, resampling=resampling)
-            c += 1
-        src = src.assign_coords({"time": datetimes_list[index]})
-        src = src.expand_dims("time")
-
-        if save_to_nc:
-            out_fn = str(pathlib.Path(file_name).with_suffix("")) + ".nc"
-            pathlib.Path(out_fn).unlink(missing_ok=True) #force delete file if exists
-            src.to_netcdf(out_fn)
-            out_dir = str(pathlib.Path(geotif_files_list[index]).parents[0])
+        if not nc_out_dir:
+            out_fn = str(Path(file_name).with_suffix("")) + ".nc"
+        else:
+            out_fn = str(Path(nc_out_dir,Path(file_name).with_suffix("").name + ".nc"))
+        
+        if Path(out_fn).exists() and not overwrite:
             nc_files.append(out_fn)
+            out_dir = str(Path(out_fn).parents[0])
             out_dirs.append(out_dir)
-
-        datasets.append(src)
+            src = xr.open_dataset(out_fn)
+            datasets.append(src)
+            
+        else:
+            Path(out_fn).unlink(missing_ok=True)
+            src = xr_read_geotif(file_name)
+            if not check_xr_rio_ds_match(src, ref):
+                src = src.rio.reproject_match(ref, resampling=resampling)
+                c += 1
+            src = src.assign_coords({"time": datetimes_list[index]})
+            src = src.expand_dims("time")
+            if save_to_nc:
+                src.to_netcdf(out_fn)
+                nc_files.append(out_fn)
+                out_dir = str(Path(out_fn).parents[0])
+                out_dirs.append(out_dir)
+            datasets.append(src)
     
     # check if anything was resampled
     if c != 0:
@@ -205,15 +237,17 @@ def xr_stack_geotifs(geotif_files_list,
               len(geotif_files_list), 
               'dems to match reference DEM spatial_ref, crs, transform, bounds, and resolution.')
 
-        # Optionally ensure data are returned as dask array.
-        if save_to_nc:
-            print('Saved .nc files alongside input dem .tif files in')
-            for i in list(set(out_dirs)):
-                print(i)
-            
-            return xr.open_mfdataset(nc_files)
+    # Optionally ensure data are returned as dask array.
+    if save_to_nc:
+        print('Saved .nc files in',','.join([str(i) for i in list(set(out_dirs))]))
+        ds = xr.open_mfdataset(nc_files)
+        ds = ds.sortby('time')
+        ds.rio.write_crs(ref.rio.crs, inplace=True)
+        return ds
         
+    print('here')
     ds = xr.concat(datasets, dim="time", combine_attrs="no_conflicts")
+    ds = ds.sortby('time')
     return ds
 
 

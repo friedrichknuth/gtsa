@@ -169,34 +169,6 @@ def linreg_reshape_parallel_results(results, ma_stack, valid_mask_2D):
 
 """ Gaussian Process Regression """
 
-def GPR_glacier_kernel():
-    """
-    adapted from
-    https://github.com/iamdonovan/pyddem/blob/master/pyddem/fit_tools.py#L1054
-    """
-    #     k1   = PairwiseKernel(1, metric='linear')
-    #     k2 = ConstantKernel(30) * ExpSineSquared(length_scale=1, periodicity=1)
-    #     kernel = (
-    #         k1+k2
-    #     )
-    ##these values should be pre-computed based on data distribution
-    base_var = 1
-    nonlin_var = 1
-    period_nonlinear = 1
-
-    k3 = (
-        ConstantKernel(base_var * 0.6) * RBF(0.75)
-        + ConstantKernel(base_var * 0.3) * RBF(1.5)
-        + ConstantKernel(base_var * 0.1) * RBF(3)
-    )
-
-    k4 = PairwiseKernel(1, metric="linear") * ConstantKernel(nonlin_var) * RationalQuadratic(period_nonlinear, 1)
-
-    kernel = k3 + k4
-
-    return kernel
-
-
 def GPR_snow_kernel():
     """
     adapted from
@@ -222,13 +194,49 @@ def GPR_snow_kernel():
     return kernel
 
 
+
+def GPR_glacier_kernel():
+    """
+    adapted from
+    https://github.com/iamdonovan/pyddem/blob/master/pyddem/fit_tools.py#L1054
+    """
+    k1   = PairwiseKernel(1, metric='linear')
+    k2 = ConstantKernel(30) * ExpSineSquared(length_scale=1, periodicity=1)
+#     kernel = (k1+k2)
+    #these values should be pre-computed based on data distribution
+    v = 200
+    base_var = v
+    nonlin_var = v
+    period_nonlinear = v
+
+    k3 = (
+        ConstantKernel(base_var * 0.6) * RBF(0.75)
+        + ConstantKernel(base_var * 0.3) * RBF(1.5)
+        + ConstantKernel(base_var * 0.1) * RBF(3)
+    )
+
+    k4 = PairwiseKernel(1, metric="linear") * \
+         ConstantKernel(nonlin_var) * \
+         RationalQuadratic(period_nonlinear, 1)
+
+    kernel = RBF(2)
+#     kernel = ConstantKernel(30) * RBF(10)
+#     kernel = PairwiseKernel(1, metric='linear') + ConstantKernel(20) * RBF(20)
+    
+#     kernel = PairwiseKernel(1, metric='linear') + ConstantKernel(20) * RBF(20)
+    
+    return kernel
+
 def GPR_model(X_train, y_train, kernel, alpha=1e-10):
     X_train = X_train.squeeze()[:, np.newaxis]
     y_train = y_train.squeeze()
 
     gaussian_process_model = GaussianProcessRegressor(
-        kernel=kernel, normalize_y=True, alpha=alpha, n_restarts_optimizer=9
+        kernel=kernel, normalize_y=True, alpha=alpha, n_restarts_optimizer=9,
     )
+#     gaussian_process_model = GaussianProcessRegressor(
+#         kernel=kernel, normalize_y=False, alpha=alpha, n_restarts_optimizer=0, optimizer=None,
+#     )
 
     gaussian_process_model = gaussian_process_model.fit(X_train, y_train)
     return gaussian_process_model
@@ -244,7 +252,7 @@ def GPR_predict(gaussian_process_model, X):
 def GPR_run(args):
     X_train, y_train_masked_array, X, glacier_kernel = args
     X_train, y_train = remove_nan_from_training_data(X_train, y_train_masked_array)
-    gaussian_process_model = GPR_model(X_train, y_train, glacier_kernel, alpha=1e-10)
+    gaussian_process_model = GPR_model(X_train, y_train, glacier_kernel, alpha=2)
     prediction, std_prediction = GPR_predict(gaussian_process_model, X)
 
     return prediction

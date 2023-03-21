@@ -16,9 +16,9 @@ def plot_array_gallery(array_3d,
                        ticks_on=False):
 
     if not vmin:
-        vmin = np.nanmin(array_3d) + 50
+        vmin = int(np.nanmin(array_3d) - 50)
     if not vmax:
-        vmax = np.nanmax(array_3d) - 50
+        vmax = int(np.nanmax(array_3d) + 50)
 
     rows, columns = get_row_column(len(array_3d))
     fig = plt.figure(figsize=(10, 15))
