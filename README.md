@@ -1,16 +1,12 @@
 # Glacier Time Series Analysis
 Methods to compute continuous glacier change from temporally and spatially sparse elevation measurements.
 
+## Notes
+ - Use this repo is to efficiently share methods, document the analysis, and make it easily reproducible as we go along.
+ - Primary objective is to develop a robust Gaussian Process regression and kernel that is suitable for sparse historical DEM data.
+ - Relevant code can be pushed to [geoutils](https://github.com/GlacioHack/geoutils), [xDEM](https://github.com/GlacioHack/xdem) and/or the [KH-9 analysis](https://github.com/adehecq/kh9_glacier_global) effort.
+
 ## Installation
-
-Download and install [Miniconda](https://docs.conda.io/en/latest/miniconda.html)  
-
-After installing Miniconda set up [Mamba](https://mamba.readthedocs.io/en/latest/installation.html) (optional but recommended)
-```
-$ conda install mamba -n base -c conda-forge
-```
-Clone the repo and set up the conda environment  
-
 ```
 $ git clone https://github.com/friedrichknuth/gtsa.git
 $ cd ./gtsa
@@ -20,16 +16,15 @@ $ pip install -e .
 ```
 
 ## Data
-Analysis ready DEM and ortho data are staged [here](https://drive.google.com/drive/folders/1AMqnuMVYCa0xzwDOiowGAwd8iV63kSjf).  
+Analysis ready DEMs are staged [here](https://drive.google.com/drive/folders/1AMqnuMVYCa0xzwDOiowGAwd8iV63kSjf).  
 
-These data can also be programmatically downloaded with the utility below. Note that Google will temporarily restrict frequent repetitive file access via this utility. Manual download via the link above will continue to work.
+Example download with provided script:
 ```
 $ conda activate gtsa
 $ cd ./gtsa/scripts
-$ python -u download_staged_data.py -site rainier -historicals Y -earthdem Y
+$ python -u download_staged_data.py -site rainier
 ```
-
-Other auxiliary data are staged [here](https://drive.google.com/drive/folders/19luPMbR8j-Jm05Z1nMCD4q_BGHNC5vHa)
+Additional auxiliary data are staged [here](https://drive.google.com/drive/folders/19luPMbR8j-Jm05Z1nMCD4q_BGHNC5vHa)
 
 ## Content
 
