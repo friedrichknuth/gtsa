@@ -69,6 +69,9 @@ def download_earthdem_data(site             = 'all',
     '''
     site_ids = {'rainier'      : '1AmuCpZEM3Pz11coF3nCO1C4rVnwyEl53',
                 'baker'        : '1wbtM1wX_lEvWq--hGS8FPQlxHmU6JI6-',
+                'glacierpeak'  : '1HaY8gDDHA646pyVOYa_QjaRM99uhOhPz',
+                'olympics'     : '1MhM9qTqtd7cZ7MiR_B8Kcgp7AE1hu59_',
+                'scg'          : '1enen-oFOXZLrNHu65j_jRvqtKhnZAujX'
     }
     # make the output directory
     Path(output_directory).mkdir(parents=True, exist_ok=True)
