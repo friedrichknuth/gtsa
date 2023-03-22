@@ -22,10 +22,13 @@ def run_command(command, verbose=False, shell=False):
               shell=shell)
     
     while p.poll() is None:
-        line = (p.stdout.readline()).decode('ASCII').rstrip('\n')
-        if verbose == True:
-            print(line)
-            
+        try:
+            line = (p.stdout.readline()).decode('ASCII').rstrip('\n')
+            if verbose == True:
+                print(line)
+        except:
+            pass
+
             
 def parse_timestamps(file_list):
     return [datetime.strptime(str(i)[-14:-4], "%Y-%m-%d") for i in file_list]
