@@ -39,7 +39,7 @@ Utilities to download data and produce all relevant figures.
 
 ## Contributing
 
-Example [workflow](https://github.com/geohackweek/sample_project_repository/wiki/Git-workflow-for-teams) to create a branch, push/preserve dev code, and send a PRs to main when ready for review and sharing.
+Example [workflow](https://github.com/friedrichknuth/gtsa/wiki/Git-workflow-for-teams) to create a branch, push/preserve dev code, and send a PRs to main when ready for review and sharing.
 
 ## Drafting
 [Google doc](https://docs.google.com/document/d/1IzehjabAB6lK7_1bGqfejESAwazdfVmTTvTMFRw6MAw/edit?usp=sharing) for general notes and ideas
