@@ -22,7 +22,7 @@ Example download with provided script:
 ```
 $ conda activate gtsa
 $ cd ./gtsa/scripts
-$ python -u download_staged_data.py -site rainier
+$ python -u download_staged_data.py -site rainier -hsfm -earthdem
 ```
 Additional auxiliary data are staged [here](https://drive.google.com/drive/folders/19luPMbR8j-Jm05Z1nMCD4q_BGHNC5vHa)
 
