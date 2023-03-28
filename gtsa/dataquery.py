@@ -6,6 +6,8 @@ import shutil
 import gdown
 
 def download_rgi_01_02(output_directory = '../data/rgi',
+                       region           = 'all',
+                       overwrite        = True,
                        verbose          = True):
     
     '''
@@ -14,6 +16,10 @@ def download_rgi_01_02(output_directory = '../data/rgi',
     Data originally downloaded from http://www.glims.org/RGI/rgi60_files/00_rgi60.zip
     Staged on Google Drive
     Shapefiles for RGI 01 and 02 converted to GeoJSON
+    
+    Input
+    output_directory : path : location to save data
+    region           : int  : either "1" or "2" for RGI 01 or RGI 02
     
     Returns
     (path/to/01_rgi60_Alaska.geojson' , path/to/02_rgi60_WesternCanadaUS.geojson)
@@ -27,18 +33,43 @@ def download_rgi_01_02(output_directory = '../data/rgi',
 
     Path(output_directory).mkdir(parents=True, exist_ok=True)
     
-    print('Downloading', rgi01_fn)
-    rgi01_output = Path(output_directory, rgi01_fn)
-    gdown.download(id=rgi01_gdrive_id, output=str(rgi01_output), quiet=~verbose)
+    if region == 1:
+        rgi01_output = Path(output_directory, rgi01_fn)
+        if rgi01_output.exists() and overwrite == False:
+            print(rgi01_output.resolve(), 'already exists and overwrite option set to False. Skipping download.')
+        else:
+            print('Downloading', rgi01_fn)
+            gdown.download(id=rgi01_gdrive_id, output=str(rgi01_output), quiet=~verbose)
+        return rgi01_output
     
-    print('Downloading', rgi02_fn)
-    rgi02_output = Path(output_directory, rgi02_fn)
-    gdown.download(id=rgi02_gdrive_id, output=str(rgi02_output), quiet=~verbose)
-    
-    return rgi01_output, rgi02_output
+    elif region == 2:
+        rgi02_output = Path(output_directory, rgi02_fn)
+        if rgi02_output.exists() and overwrite == False:
+            print(rgi02_output.resolve(), 'already exists and overwrite option set to False. Skipping download.')
+        else:
+            print('Downloading', rgi02_fn)
+            gdown.download(id=rgi02_gdrive_id, output=str(rgi02_output), quiet=~verbose)
+        return rgi02_output
+        
+    elif region == 'all':
+        rgi01_output = Path(output_directory, rgi01_fn)
+        if rgi01_output.exists() and overwrite == False:
+            print(rgi01_output.resolve(), 'already exists and overwrite option set to False. Skipping download.')
+        else:
+            print('Downloading', rgi01_fn)
+            gdown.download(id=rgi01_gdrive_id, output=str(rgi01_output), quiet=~verbose)
+        
+        if rgi02_output.exists() and overwrite == False:
+            print(rgi02_output.resolve(), 'already exists and overwrite option set to False. Skipping download.')
+        else:
+            print('Downloading', rgi02_fn)
+            gdown.download(id=rgi02_gdrive_id, output=str(rgi02_output), quiet=~verbose)
+            
+        return rgi01_output, rgi02_output
     
 
 def download_wgms(output_directory = '../data/wgms',
+                  overwrite        = True,
                   verbose          = True):
     '''
     Downloads 2022-09 version of WGMS csv from https://wgms.ch/data_databaseversions/
@@ -48,12 +79,16 @@ def download_wgms(output_directory = '../data/wgms',
     out = Path(output_directory,url.split('/')[-1])
 
     Path(output_directory).mkdir(parents=True, exist_ok=True)
+    
+    if out.exists() and overwrite == False:
+        print(out.resolve(), 'already exists and overwrite option set to False. Skipping.')
+    else:
+        print('Downloading', url)
+        call = ['wget', '-O', str(out), url]
+        gtsa.io.run_command(call,verbose=True)
 
-    call = ['wget', '-O', str(out), url]
-    gtsa.io.run_command(call,verbose=True)
-
-    call = ['unzip', str(out), '-d', output_directory]
-    gtsa.io.run_command(call,verbose=verbose)
+        call = ['unzip', str(out), '-d', output_directory]
+        gtsa.io.run_command(call,verbose=verbose)
     
 def download_earthdem_data(site             = 'all',
                            output_directory = '../data/earthdem',
@@ -79,26 +114,19 @@ def download_earthdem_data(site             = 'all',
     # download site only, if specified 
     if not site == 'all':
         try:
-            print('Downloading EarthDEM', site)
+            print('Downloading EarthDEM data for', site)
             ID = site_ids[site]
             out = Path(output_directory,site)
             if out.exists() and overwrite == False:
                 print(out.resolve(), 'already exists and overwrite option set to False. Skipping.')
             else:
-                call = ['gdown', ID]
-                gtsa.io.run_command(call,verbose=verbose)
-
-                if Path(site+'.tar.gz').exists():
-
-                    call = ['tar', 'zxvf', site+'.tar.gz']
+                out_tmp = Path(out.as_posix()+'.tar.gz')
+                gdown.download(id=ID, output=str(out_tmp), quiet=~verbose)
+                if out_tmp.exists():
+                    call = ['tar', 'zxvf', out_tmp.as_posix(), '--directory', output_directory.as_posix()]
                     gtsa.io.run_command(call,verbose=verbose)
-
-                    shutil.rmtree(out, ignore_errors=True)
-                    print('Moving to', str(out.resolve()))
-                    Path(site).rename(out)
-
-                    print('Deleting',site+'.tar.gz')
-                    Path(site+'.tar.gz').unlink(missing_ok=True)
+                    print('Deleting',out_tmp.as_posix())
+                    out_tmp.unlink(missing_ok=True)
         except:
             print('Download for', site, 'failed')
             print('Ensure it is one of', site_ids.keys())
@@ -109,25 +137,19 @@ def download_earthdem_data(site             = 'all',
     else:
         for site in site_ids.keys():
             try:
-                print('Downloading EarthDEM', site)
+                print('Downloading EarthDEM data for', site)
                 ID = site_ids[site]
                 out = Path(output_directory,site)
                 if out.exists() and overwrite == False:
                     print(out.resolve(), 'already exists and overwrite option set to False. Skipping.')
                 else:
-                    call = ['gdown', ID]
-                    gtsa.io.run_command(call,verbose=verbose)
-
-                    if Path(site+'.tar.gz').exists():
-                        call = ['tar', 'zxvf', site+'.tar.gz']
+                    out_tmp = Path(out.as_posix()+'.tar.gz')
+                    gdown.download(id=ID, output=str(out_tmp), quiet=~verbose)
+                    if out_tmp.exists():
+                        call = ['tar', 'zxvf', out_tmp.as_posix(), '--directory', output_directory.as_posix()]
                         gtsa.io.run_command(call,verbose=verbose)
-
-                        shutil.rmtree(out, ignore_errors=True)
-                        print('Moving to', str(out.resolve()))
-                        Path(site).rename(out)
-
-                        print('Deleting',site+'.tar.gz')
-                        Path(site+'.tar.gz').unlink(missing_ok=True)
+                        print('Deleting',out_tmp.as_posix())
+                        out_tmp.unlink(missing_ok=True)
             except:
                 print('If receiving "Access denied" error try again later or use direct link in browser')
                 pass
@@ -160,26 +182,19 @@ def download_hsfm_data(site             = 'all',
     # download site only, if specified 
     if not site == 'all':
         try:
-            print('Downloading HSfM', site)
+            print('Downloading HSfM data for', site)
             ID = site_ids[site]
             out = Path(output_directory,site)
             if out.exists() and overwrite == False:
                 print(out.resolve(), 'already exists and overwrite option set to False. Skipping.')
             else:
-                call = ['gdown', ID]
-                gtsa.io.run_command(call,verbose=verbose)
-
-                if Path(site+'.tar.gz').exists():
-
-                    call = ['tar', 'zxvf', site+'.tar.gz']
+                out_tmp = Path(out.as_posix()+'.tar.gz')
+                gdown.download(id=ID, output=str(out_tmp), quiet=~verbose)
+                if out_tmp.exists():
+                    call = ['tar', 'zxvf', out_tmp.as_posix(), '--directory', output_directory.as_posix()]
                     gtsa.io.run_command(call,verbose=verbose)
-
-                    shutil.rmtree(out, ignore_errors=True)
-                    print('Moving to', str(out.resolve()))
-                    Path(site).rename(out)
-
-                    print('Deleting',site+'.tar.gz')
-                    Path(site+'.tar.gz').unlink(missing_ok=True)
+                    print('Deleting',out_tmp.as_posix())
+                    out_tmp.unlink(missing_ok=True)
         except:
             print('Download for', site, 'failed')
             print('Ensure it is one of', site_ids.keys())
@@ -190,25 +205,19 @@ def download_hsfm_data(site             = 'all',
     else:
         for site in site_ids.keys():
             try:
-                print('Downloading HSfM', site)
+                print('Downloading HSfM data for', site)
                 ID = site_ids[site]
                 out = Path(output_directory,site)
                 if out.exists() and overwrite == False:
                     print(out.resolve(), 'already exists and overwrite option set to False. Skipping.')
                 else:
-                    call = ['gdown', ID]
-                    gtsa.io.run_command(call,verbose=verbose)
-
-                    if Path(site+'.tar.gz').exists():
-                        call = ['tar', 'zxvf', site+'.tar.gz']
+                    out_tmp = Path(out.as_posix()+'.tar.gz')
+                    gdown.download(id=ID, output=str(out_tmp), quiet=~verbose)
+                    if out_tmp.exists():
+                        call = ['tar', 'zxvf', out_tmp.as_posix(), '--directory', output_directory.as_posix()]
                         gtsa.io.run_command(call,verbose=verbose)
-
-                        shutil.rmtree(out, ignore_errors=True)
-                        print('Moving to', str(out.resolve()))
-                        Path(site).rename(out)
-
-                        print('Deleting',site+'.tar.gz')
-                        Path(site+'.tar.gz').unlink(missing_ok=True)
+                        print('Deleting',out_tmp.as_posix())
+                        out_tmp.unlink(missing_ok=True)
             except:
                 print('If receiving "Access denied" error try again later or use direct link in browser')
                 pass
