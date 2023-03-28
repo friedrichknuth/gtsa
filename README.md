@@ -2,8 +2,8 @@
 Methods to compute continuous glacier change from temporally and spatially sparse elevation measurements.
 
 ## Notes
- - Use this repo is to efficiently share methods, document the analysis, and make it easily reproducible as we go along.
- - Primary objective is to develop a robust Gaussian Process regression and kernel that is suitable for sparse historical DEM data.
+ - The purpose of this repo is to efficiently share methods, document the analysis, and make it easily reproducible as we go along.
+ - Current primary objective is to develop a robust Gaussian Process regression and kernel that is suitable for sparse historical DEM data.
  - Relevant code can be pushed to [geoutils](https://github.com/GlacioHack/geoutils), [xDEM](https://github.com/GlacioHack/xdem) and/or the [KH-9 analysis](https://github.com/adehecq/kh9_glacier_global) effort.
 
 ## Installation
