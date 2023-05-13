@@ -7,6 +7,70 @@ from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import folium
+
+from gtsa import geospatial
+
+def plot_interactive_cogs(cog_urls,
+                          cog_names,
+                          cogs_attribution    = 'gtsa',
+                          tiler               = 'https://titiler.xyz/cog/tiles/{z}/{x}/{y}',
+                          expression          = 'expression=b1&rescale=0,255',
+                          folium_map_object   = None,
+                          zoom_start          = 10,
+                          basemap             = 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+                          basemap_attribution = 'Google Earth'
+                         ):
+    return
+    
+    
+
+def plot_interactive_cog(cog_url, 
+                         html_file_name      = None,
+                         cog_name            = 'my raster',
+                         cog_attribution     = 'gtsa',
+                         tiler               = 'https://titiler.xyz/cog/tiles/{z}/{x}/{y}',
+                         expression          = 'expression=b1&rescale=0,255',
+                         folium_map_object   = None,
+                         zoom_start          = 11,
+                         basemap             = 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+                         basemap_attribution = 'Google Earth'):
+    '''
+    Plots Cloud Optimized GeoTIFFs (COG) on interactive Folium map.
+    '''
+    #TODO add check that cog is in EPSG:4326
+    
+    map_center_x, map_center_y = geospatial._get_raster_centroid(cog_url)
+    
+    virtual_tiles = f"{tiler}?url={cog_url}"
+    if expression:
+        virtual_tiles = f"{virtual_tiles}&{expression}"
+    
+    m = folium_map_object
+    if not m:
+        m = folium.Map(
+            location=(map_center_y, map_center_x),
+            tiles=False,
+            zoom_start=zoom_start,
+            control_scale = True,
+            )
+        folium.TileLayer(basemap, 
+                 attr=basemap_attribution,
+                 opacity=0.8,
+                 name=basemap_attribution).add_to(m)
+        
+    folium.TileLayer(tiles=virtual_tiles, 
+                     overlay=True, 
+                     show = True,
+                     name=cog_name, 
+                     attr=cog_attribution).add_to(m)
+    
+    if html_file_name:
+        m.save(html_file_name)
+        return
+    
+    return m
+
 
 def plot_array_gallery(array_3d, 
                        titles_list=None, 
@@ -48,12 +112,17 @@ def plot_time_series_gallery(
     y_ticks_off=False,
     sharex=True,
     sharey=True,
+    ylim=None, 
+    y_label='Elevation (m)',
+    x_label='Time',
     figsize=(15, 10),
     legend=True,
     linestyle="none",
     legend_labels=[
         "Observations",
     ],
+    random_choice = False,
+    output_file = None,
 ):
 
     rows, columns = get_row_column(len(x_values))
@@ -65,6 +134,9 @@ def plot_time_series_gallery(
             x, y = x_values[i], y_values[i]
             ax = plt.subplot(rows, columns, i + 1, aspect="auto")
             ax.plot(x, y, marker="o", c="b", linestyle=linestyle, label=legend_labels[0])
+            if random_choice:
+                random_index = np.random.choice(np.arange(x.size))
+                ax.plot(x[random_index], y[random_index], marker="o", c="r", linestyle=linestyle)
             if x_ticks_off:
                 ax.set_xticks(())
             if y_ticks_off:
@@ -94,7 +166,7 @@ def plot_time_series_gallery(
                         y - 1.96 * std_prediction,
                         y + 1.96 * std_prediction,
                         alpha=0.2,
-                        label=legend_labels[idx + 1] + "_95_%conf",
+                        label=legend_labels[idx + 2],
                         color="C" + str(idx + 1),
                     )
 
@@ -103,10 +175,32 @@ def plot_time_series_gallery(
             ax.set_title(labels[i])
 
     if legend:
-        axes[0].legend()
+        axes[0].legend(loc='lower left')
+        
+    if y_label:
+        for ax in axes:
+            if ax in axes[::columns]:
+                ax.set_ylabel(y_label)
+                
+    if x_label:
+        for ax in axes[-columns:]:
+            ax.set_xlabel(x_label)
+                
     if sharex:
-        for ax in axes[:-columns]:
-            ax.set_xticks(())
+        mins = []
+        maxs = []
+        for ax in axes:
+            xmin, xmax = ax.get_xlim()
+            mins.append(xmin)
+            maxs.append(xmax)
+        xmin = min(mins)
+        xmax = max(maxs)
+        for ax in axes:
+            if ax in axes[-columns:]:
+                ax.set_xlim(xmin,xmax)
+            else:
+                ax.set_xlim(xmin,xmax)
+                ax.set_xticks(())
     if sharey:
         mins = []
         maxs = []
@@ -114,20 +208,27 @@ def plot_time_series_gallery(
             ymin, ymax = ax.get_ylim()
             mins.append(ymin)
             maxs.append(ymax)
-            ax.axhline(0,color='k',alpha=0.2)
+#             ax.axhline(0,color='k',alpha=0.2)
         ymin = min(mins)
         ymax = max(maxs)
         for ax in axes:
-            if ax in axes[::rows-1]:
+            if ax in axes[::columns]:
                 ax.set_ylim(ymin,ymax)
             else:
                 ax.set_ylim(ymin,ymax)
                 ax.set_yticks(())
+    if ylim:
+        for ax in axes:
+            ax.set_ylim(ylim[0],ylim[1])
+    
     else:
         for ax in axes:
             ax.axhline(0,color='k',alpha=0.2)
             
     plt.tight_layout()
+    
+    if output_file:
+        plt.savefig(output_file, bbox_inches='tight')
 
 
 def plot_timelapse(
@@ -151,19 +252,27 @@ def plot_timelapse(
     if not vmax:
         vmax = np.nanmax(array) - 50
 
+
+    
     fig, ax = plt.subplots(figsize=(10, 10))
+#     fig.set_size_inches(10, 10, True)
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=0.1)
     im = ax.imshow(array[0, :, :],
                    interpolation="none", 
                    alpha=alpha, 
                    vmin=vmin, vmax=vmax, 
                    cmap=cmap)
-    plt.colorbar(im,extend='both')
+#     ax.set_facecolor("black")
+    cbar = plt.colorbar(im,cax=cax,extend='both')
+    cbar.set_label('Elevation difference (m)')
     if points:
         (p,) = ax.plot(points[0], 
                        points[1], 
                        marker="o", 
                        color="b", 
                        linestyle="none")
+#     plt.tight_layout()
     plt.close()
 
     def vid_init():

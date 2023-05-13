@@ -1,8 +1,10 @@
 from pathlib import Path
 from datetime import datetime
 from subprocess import Popen, PIPE, STDOUT
+import fsspec
+import re
 
-import geoutils as gu
+# import geoutils as gu
 import numpy as np
 import rioxarray
 import xarray as xr
@@ -12,9 +14,45 @@ from dask.distributed import Client, LocalCluster
 import logging
 
 
-def run_command(command, verbose=False, shell=False):
-    if verbose == True:
+def parse_urls_from_S3_bucket(s3_bucket_name,
+                              aws_server_url = 's3.amazonaws.com', 
+                              folder = '',
+                              extension = 'tif',
+                             ):
+    
+    fs = fsspec.filesystem('s3')
+#     tmp = re.compile(date_string_pattern)
+    
+    bucket = 's3://'+Path(s3_bucket_name, folder).as_posix()
+    base_url = Path(s3_bucket_name+'.'+aws_server_url,folder).as_posix()
+    file_names  = [x.split('/')[-1] for x in fs.ls(bucket) if extension in x]
+#     dates = [tmp.search(x).group(0) for x in file_names]
+    urls   = ['http://'+ Path(base_url,x).as_posix() for x in file_names]
+
+    return urls
+
+
+def run_command(command, verbose=True):
+    '''
+    Run something from the command line.
+    
+    Example 1
+    call = ['command', 'input', output']
+    run_command(call)
+    
+    Example 2
+    call = 'command "input" output'
+    run_command(call)
+    
+    Use a space seperated string if your command contains nested strings.
+    '''
+    
+    if isinstance(command, type(str())):
+        print(command)
+        shell = True
+    else:
         print(*command)
+        shell = False
     
     p = Popen(command,
               stdout=PIPE,
@@ -22,16 +60,20 @@ def run_command(command, verbose=False, shell=False):
               shell=shell)
     
     while p.poll() is None:
-        try:
-            line = (p.stdout.readline()).decode('ASCII').rstrip('\n')
-            if verbose == True:
-                print(line)
-        except:
-            pass
+        if verbose == True:
+            try:
+                line = (p.stdout.readline()).decode('ASCII').rstrip('\n')
+            except:
+                line = p.stdout.read()
+                pass
+            print(line)
 
             
-def parse_timestamps(file_list):
-    return [datetime.strptime(str(i)[-14:-4], "%Y-%m-%d") for i in file_list]
+def parse_timestamps(file_list,
+                     date_string_pattern = '....-..-..',
+                    ):
+    tmp = re.compile(date_string_pattern)
+    return [tmp.search(x).group(0) for x in file_list]
 
 def parse_hsfm_timestamps(file_list):
     date_times = []
@@ -86,23 +128,23 @@ def dask_get_mapped_tasks(dask_array):
     tasks_count = max([int(i) for i in strings if i.isdigit()])
     return tasks_count
 
-def stack_geotif_arrays(geotif_files_list):
-    """
-    Simple function to stack raster arrays. Assumes these are already aligned.
-    Inputs
-    ----------
-    geotif_files_list : list of GeoTIFF files
-    Returns
-    -------
-    ma_stack : numpy.ma.core.MaskedArray
-    """
-    arrays = []
-    for i in geotif_files_list:
-        src = gu.georaster.Raster(i)
-        masked_array = src.data
-        arrays.append(masked_array)
-    ma_stack = np.ma.vstack(arrays)
-    return ma_stack
+# def stack_geotif_arrays(geotif_files_list):
+#     """
+#     Simple function to stack raster arrays. Assumes these are already aligned.
+#     Inputs
+#     ----------
+#     geotif_files_list : list of GeoTIFF files
+#     Returns
+#     -------
+#     ma_stack : numpy.ma.core.MaskedArray
+#     """
+#     arrays = []
+#     for i in geotif_files_list:
+#         src = gu.georaster.Raster(i)
+#         masked_array = src.data
+#         arrays.append(masked_array)
+#     ma_stack = np.ma.vstack(arrays)
+#     return ma_stack
 
 
 
@@ -220,9 +262,9 @@ def xr_stack_geotifs(geotif_files_list,
         else:
             Path(out_fn).unlink(missing_ok=True)
             src = xr_read_geotif(file_name)
-            if not check_xr_rio_ds_match(src, ref):
-                src = src.rio.reproject_match(ref, resampling=resampling)
-                c += 1
+#             if not check_xr_rio_ds_match(src, ref):
+            src = src.rio.reproject_match(ref, resampling=resampling)
+            c += 1
             src = src.assign_coords({"time": datetimes_list[index]})
             src = src.expand_dims("time")
             if save_to_nc:

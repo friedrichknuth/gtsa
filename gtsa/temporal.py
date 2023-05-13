@@ -13,6 +13,7 @@ from sklearn.gaussian_process.kernels import (
     PairwiseKernel,
     RationalQuadratic,
     WhiteKernel,
+    Matern,
 )
 from scipy.optimize import curve_fit
 from scipy.interpolate import interp1d
@@ -169,74 +170,76 @@ def linreg_reshape_parallel_results(results, ma_stack, valid_mask_2D):
 
 """ Gaussian Process Regression """
 
-def GPR_snow_kernel():
+def GPR_CO2_kernel():
     """
     adapted from
     https://scikit-learn.org/stable/auto_examples/gaussian_process/plot_gpr_co2.html#sphx-glr-auto-examples-gaussian-process-plot-gpr-co2-py
     """
-
-    linear_kernel = PairwiseKernel(1, metric="linear")
-
-    v = 10.0
-    long_term_trend_kernel = v ** 2 * RBF(length_scale=v)
+    
+    long_term_trend_kernel = 50.0**2 * RBF(length_scale=50.0)
 
     seasonal_kernel = (
-        2.0 ** 2
+        2.0**2
         * RBF(length_scale=100.0)
         * ExpSineSquared(length_scale=1.0, periodicity=1.0, periodicity_bounds="fixed")
     )
 
-    irregularities_kernel = 0.5 ** 2 * RationalQuadratic(length_scale=1.0, alpha=1.0)
+    irregularities_kernel = 0.5**2 * RationalQuadratic(length_scale=1.0, alpha=1.0)
 
-    noise_kernel = 0.1 ** 2 * RBF(length_scale=0.1) + WhiteKernel(noise_level=0.1 ** 2, noise_level_bounds=(1e-5, 1e5))
-
-    kernel = linear_kernel + long_term_trend_kernel + seasonal_kernel + irregularities_kernel + noise_kernel
-    return kernel
-
-
-
-def GPR_glacier_kernel():
-    """
-    adapted from
-    https://github.com/iamdonovan/pyddem/blob/master/pyddem/fit_tools.py#L1054
-    """
-    k1   = PairwiseKernel(1, metric='linear')
-    k2 = ConstantKernel(30) * ExpSineSquared(length_scale=1, periodicity=1)
-#     kernel = (k1+k2)
-    #these values should be pre-computed based on data distribution
-    v = 200
-    base_var = v
-    nonlin_var = v
-    period_nonlinear = v
-
-    k3 = (
-        ConstantKernel(base_var * 0.6) * RBF(0.75)
-        + ConstantKernel(base_var * 0.3) * RBF(1.5)
-        + ConstantKernel(base_var * 0.1) * RBF(3)
+    noise_kernel = 0.1**2 * RBF(length_scale=0.1) + WhiteKernel(
+        noise_level=0.1**2, noise_level_bounds=(1e-5, 1e5)
     )
 
-    k4 = PairwiseKernel(1, metric="linear") * \
+    co2_kernel = (long_term_trend_kernel + seasonal_kernel + irregularities_kernel + noise_kernel)
+    co2_kernel
+
+def GPR_huggonet_kernel():
+    """
+    https://github.com/iamdonovan/pyddem/blob/master/pyddem/fit_tools.py#L1054
+    """
+    base_var = 50.
+    period_nonlinear = 100.
+    nonlin_var = 0
+    
+    k1 = PairwiseKernel(1, metric='linear')
+    k2 = ConstantKernel(30) * ExpSineSquared(length_scale=1, periodicity=1)
+    k3 = (
+        ConstantKernel(base_var * 0.6) * RBF(0.75) + \
+        ConstantKernel(base_var * 0.3) * RBF(1.5) + \
+        ConstantKernel(base_var * 0.1) * RBF(3)
+    )
+    k4 = (PairwiseKernel(1, metric="linear") * \
          ConstantKernel(nonlin_var) * \
          RationalQuadratic(period_nonlinear, 1)
+         )
 
-    kernel = RBF(2)
-#     kernel = ConstantKernel(30) * RBF(10)
-#     kernel = PairwiseKernel(1, metric='linear') + ConstantKernel(20) * RBF(20)
     
-#     kernel = PairwiseKernel(1, metric='linear') + ConstantKernel(20) * RBF(20)
+    kernel = k1+k2+k3+k4
+    return(kernel)
+
+def GPR_glacier_kernel():
     
+#     # fit data tight
+#     kernel = RBF(5) * ConstantKernel(100) + RBF(20) + RBF(100) * PairwiseKernel(1, metric='linear')
+#     # fit data coarse
+#     kernel = RBF(5) + RBF(20) + RBF(100) * PairwiseKernel(1, metric='linear') 
+    
+    k1 = 30.0 * Matern(length_scale=10.0, nu=1.5)
+    
+    kernel = k1
+
     return kernel
 
-def GPR_model(X_train, y_train, kernel, alpha=1e-10):
+def GPR_model(X_train, y_train, kernel, alpha=2):
     X_train = X_train.squeeze()[:, np.newaxis]
     y_train = y_train.squeeze()
 
-    gaussian_process_model = GaussianProcessRegressor(
-        kernel=kernel, normalize_y=True, alpha=alpha, n_restarts_optimizer=9,
-    )
 #     gaussian_process_model = GaussianProcessRegressor(
-#         kernel=kernel, normalize_y=False, alpha=alpha, n_restarts_optimizer=0, optimizer=None,
+#         kernel=kernel, normalize_y=True, alpha=alpha, n_restarts_optimizer=9,
 #     )
+    gaussian_process_model = GaussianProcessRegressor(
+        kernel=kernel, normalize_y=True, alpha=alpha, n_restarts_optimizer=0, optimizer=None,
+    )
 
     gaussian_process_model = gaussian_process_model.fit(X_train, y_train)
     return gaussian_process_model

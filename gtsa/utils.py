@@ -9,10 +9,11 @@ import shutil
 from datetime import datetime, timedelta
 
 import geopandas as gpd
-import geoutils as gu
+# import geoutils as gu
+# import xdem
 import numpy as np
 import pandas as pd
-import xdem
+
 
 def decyear_to_date_time(decyear: float, leapyear=True, fannys_corr=False) -> datetime.datetime:
     """

@@ -59,6 +59,14 @@ def dem_stack_bounds2polygon(tifs):
         polygon_gdf = bounds2polygon(xmin, xmax, ymin, ymax, epsg_code=epsg_code)
         
         return polygon_gdf
+
+def _get_raster_centroid(filename):
+    src = rasterio.open(filename,masked=True)
+    xmin, ymin, xmax, ymax = src.bounds
+    cx = (xmax - xmin)/2 + xmin
+    cy = (ymax - ymin)/2 + ymin
+    return cx, cy
+    
     
 def _get_max_bounds(tifs):
     '''

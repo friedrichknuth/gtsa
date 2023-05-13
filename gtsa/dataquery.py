@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from pathlib import Path
 import requests
 import shutil
-import gdown
+# import gdown
 
 def download_rgi_01_02(output_directory = '../data/rgi',
                        region           = 'all',

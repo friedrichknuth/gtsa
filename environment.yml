@@ -1,29 +1,39 @@
 name: gtsa
 channels:
   - conda-forge
-  - oggm
+#   - oggm
 dependencies:
+  - awscli
+  - s3fs
   - numpy
   - scipy
   - matplotlib
-  - toml
+  - statsmodels
   - pandas
-  - xdem
+  - geopandas
+  - xarray
   - rioxarray
   - opencv
-  - oggm
-  - oggm-deps
   - dask
+  - folium
   - distributed
   - zarr
-  - jupyterlab
+  - tqdm
   - pip
-  - holoviews
-  - geoviews
-  - datashader
-  - gdown
+  
+#   - toml
+#   - oggm
+#   - oggm-deps
+
+#   - jupyterlab
+
+#   - holoviews
+#   - geoviews
+#   - datashader
+#   - gdown
   # dev requirements
-  - pytest
-  - pip:
-    - -e "git+https://github.com/GlacioHack/GeoUtils.git@main#egg=geoutils"
-    - -e "git+https://github.com/GlacioHack/xdem.git@main#egg=xdem"
+#   - pytest
+#   pip
+#   - pip:
+#     - -e "git+https://github.com/GlacioHack/GeoUtils.git@main#egg=geoutils"
+#     - -e "git+https://github.com/GlacioHack/xdem.git@main#egg=xdem"
