@@ -11,6 +11,17 @@ import folium
 
 from gtsa import geospatial
 
+def plot_interactive_cogs_sites(site_names,
+                                list_of_cog_urls_by_site
+                                list_of_cog_names_by_site,
+                                ):
+    #TODO
+    '''
+    add markers for each site
+    turn all cogs off by default
+    '''
+    return
+
 def plot_interactive_cogs(cog_urls,
                           cog_names,
                           cogs_attribution    = 'gtsa',
@@ -21,6 +32,13 @@ def plot_interactive_cogs(cog_urls,
                           basemap             = 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
                           basemap_attribution = 'Google Earth'
                          ):
+    
+    # TODO
+    '''
+    get center of cogs
+    plot all cogs with dropdown
+    add maximize window
+    '''
     return
     
     
