@@ -21,16 +21,19 @@ def parse_urls_from_S3_bucket(s3_bucket_name,
                              ):
     
     fs = fsspec.filesystem('s3')
-#     tmp = re.compile(date_string_pattern)
-    
     bucket = 's3://'+Path(s3_bucket_name, folder).as_posix()
     base_url = Path(s3_bucket_name+'.'+aws_server_url,folder).as_posix()
     file_names  = [x.split('/')[-1] for x in fs.ls(bucket) if extension in x]
-#     dates = [tmp.search(x).group(0) for x in file_names]
     urls   = ['http://'+ Path(base_url,x).as_posix() for x in file_names]
 
     return urls
 
+def _get_test_sites(s3_bucket_name):
+    fs = fsspec.filesystem('s3')
+    bucket ='s3://'+s3_bucket_name
+    sites = [x.split('/')[-1] for x in fs.ls(bucket)]
+    return sites
+    
 
 def run_command(command, verbose=True):
     '''

@@ -5,6 +5,7 @@ import numpy as np
 # import pyproj
 import rasterio
 from shapely.geometry import Point, Polygon
+import concurrent
 
 
 def bounds2polygon(xmin, xmax, ymin, ymax, 
@@ -53,21 +54,28 @@ def dem_stack_bounds2polygon(tifs):
     
     if _check_common_epsg(tifs):
         epsg_code = _get_epsg_code(tifs[0])
-        
         xmin, xmax, ymin, ymax = _get_max_bounds(tifs)
-        
         polygon_gdf = bounds2polygon(xmin, xmax, ymin, ymax, epsg_code=epsg_code)
-        
         return polygon_gdf
 
 def _get_raster_centroid(filename):
-    src = rasterio.open(filename,masked=True)
+    src = rasterio.open(filename)
     xmin, ymin, xmax, ymax = src.bounds
     cx = (xmax - xmin)/2 + xmin
     cy = (ymax - ymin)/2 + ymin
     return cx, cy
-    
-    
+
+def _get_rasters_centroid(tifs):
+    xmin, xmax, ymin, ymax = _get_max_bounds(tifs)
+    cx = (xmax - xmin)/2 + xmin
+    cy = (ymax - ymin)/2 + ymin
+    return cx, cy
+
+def _get_bounds(tif):
+    src = rasterio.open(tif)
+    xmin, ymin, xmax, ymax = src.bounds
+    return xmin, xmax, ymin, ymax
+
 def _get_max_bounds(tifs):
     '''
     Function to return max bounds for stack ov overlapping geotiffs.
@@ -79,11 +87,12 @@ def _get_max_bounds(tifs):
     xmin, xmax, ymin, ymax : coordinates
     '''
     
+    pool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
+
     # check all tifs are in same CRS
     epsg_codes = []
-    for fn in tifs:
-        epsg_codes.append(_get_epsg_code(fn))
-    
+    futures = {pool.submit(_get_epsg_code, x): x for x in tifs}
+    epsg_codes = [f.result() for f in concurrent.futures.as_completed(futures)]
     if len(list(set(epsg_codes))) != 1:
         print('Not all input files have the same CRS')
         for i in list(zip(epsg_codes, tifs)):
@@ -95,7 +104,17 @@ def _get_max_bounds(tifs):
         ymin_vals = []
         xmax_vals = []
         ymax_vals = []
-
+        
+        ## submitting in parallel isn't faster for some reason...
+#         futures = {pool.submit(_get_bounds, x): x for x in tifs}
+#         results = [f.result() for f in concurrent.futures.as_completed(futures)]
+#         for r in results:
+#             xmin, xmax, ymin, ymax = r
+#             xmin_vals.append(xmin)
+#             ymin_vals.append(ymin)
+#             xmax_vals.append(xmax)
+#             ymax_vals.append(ymax)
+            
         for fn in tifs:
             src = rasterio.open(fn,masked=True)
             xmin, ymin, xmax, ymax = src.bounds
