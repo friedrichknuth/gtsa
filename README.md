@@ -9,6 +9,11 @@ $ mamba env create -f environment.yml
 $ conda activate gtsa
 $ pip install -e .
 ```
+## Examples
+
+Plotting 
+- Create an [interactive map](https://staff.washington.edu/knuth/downloads/conus_sites.html) that efficiently visualizes many large rasters.
+
 
 ## Data
 Analysis ready DEMs are staged [here](https://drive.google.com/drive/folders/1AMqnuMVYCa0xzwDOiowGAwd8iV63kSjf).  
@@ -24,13 +29,13 @@ Additional auxiliary data are staged [here](https://drive.google.com/drive/folde
 ## Content
 
 __./gtsa__  
-Python library with custom functions for this analysis.
+Main python library with custom functions developed for these analysis methods.
 
 __./notebooks__  
-Jupyter notebooks that describe the analysis steps, show plots, and tell the data story.
+Example Jupyter notebooks that describe the analysis steps and showcase functionality.
 
 __./scripts__  
-Utilities to download data and produce all relevant figures.
+Utilities to download data, process at scale, and produce standard figures.
 
 ## Contributing
 
