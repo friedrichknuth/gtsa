@@ -3,16 +3,20 @@ from datetime import datetime
 from subprocess import Popen, PIPE, STDOUT
 import fsspec
 import re
+import shutil
 
 # import geoutils as gu
 import numpy as np
 import rioxarray
 import xarray as xr
 from rasterio.enums import Resampling
+import zarr
 
 from dask.distributed import Client, LocalCluster
 import logging
 
+import warnings
+warnings.filterwarnings("ignore")
 
 def parse_urls_from_S3_bucket(s3_bucket_name,
                               aws_server_url = 's3.amazonaws.com', 
@@ -76,7 +80,13 @@ def parse_timestamps(file_list,
                      date_string_pattern = '....-..-..',
                     ):
     tmp = re.compile(date_string_pattern)
-    return [tmp.search(x).group(0) for x in file_list]
+    results = []
+    for x in file_list:
+        try:
+            results.append(tmp.search(x).group(0))
+        except:
+            print('pattern not find in',x)
+    return results
 
 def parse_hsfm_timestamps(file_list):
     date_times = []
@@ -189,7 +199,133 @@ def xr_read_geotif(geotif_file_path, chunks='auto', masked=True):
 
     return ds
 
+def create_zarr_stack(xarray_dataset,
+                      output_directory = './',
+                      zarr_stack_file_name= 'stack.zarr',
+                      overwrite = False,
+                      print_info = True,
+                      ):
+    
+    ds = xarray_dataset
+    output_directory = Path(output_directory)
+    output_directory.mkdir(parents=True, exist_ok=True)
+    
+    zarr_stack_fn  = Path(output_directory, zarr_stack_file_name)
+    zarr_stack_tmp = Path(output_directory, 'stack_tmp.zarr')
+    print(zarr_stack_fn)
+    print(zarr_stack_tmp)
+    
+    if overwrite:
+        shutil.rmtree(zarr_stack_fn, ignore_errors=True)
+        shutil.rmtree(zarr_stack_tmp, ignore_errors=True)
+    elif zarr_stack_fn.exists():
+        ds = xr.open_dataset(zarr_stack_fn,chunks='auto',engine='zarr')
+        if print_info:
+            print('\nZarr file exists')
+            print('\nZarr file info')
+            source_group = zarr.open(zarr_stack_fn)
+            source_array = source_group['band1']
+            print(source_group.tree())
+            print(source_array.info)
+            del source_group
+            del source_array
+        
+        tc,yc,xc  = _determine_optimal_chuck_size(ds,
+                                                  print_info = print_info)
+        ds = xr.open_dataset(zarr_stack_fn,
+                             chunks={'time': tc, 'y': yc, 'x':xc},engine='zarr')
+        return ds
+    
+    else:
+        # remove attributes that zarr doesn't like
+        try:
+            ds = ds.drop(['spatial_ref'])
+            for i in ds.data_vars:
+                try:
+                    del ds[i].attrs['grid_mapping']
+                except:
+                    pass
+        except:
+            pass
 
+        if print_info:
+            print('Creating temporary zarr stack')
+        ds.to_zarr(zarr_stack_tmp)
+
+        if print_info:
+            source_group = zarr.open(zarr_stack_tmp)
+            source_array = source_group['band1']
+            print(source_group.tree())
+            print(source_array.info)
+            del source_group
+            del source_array
+
+        if print_info:
+            print('Rechunking temporary zarr stack and saving as')
+            print(str(zarr_stack_fn))
+
+        arr = ds['band1'].data.rechunk({0:-1, 1:'auto', 2:'auto'}, 
+                                                    block_size_limit=1e8, 
+                                                    balance=True)
+        t,y,x = arr.chunks[0][0], arr.chunks[1][0], arr.chunks[2][0]
+        ds = xr.open_dataset(zarr_stack_tmp,
+                             chunks={'time': t, 'y': y, 'x':x},engine='zarr')
+        ds['band1'].encoding = {'chunks': (t, y, x)}
+        ds.to_zarr(zarr_stack_fn)
+
+        if print_info:
+            print('\nRechunked zarr file info')
+            source_group = zarr.open(zarr_stack_file_name)
+            source_array = source_group['band1']
+            print(source_group.tree())
+            print(source_array.info)
+            del source_group
+            del source_array
+        if overwrite:
+            print('Removing temporary zarr stack')
+            shutil.rmtree(zarr_stack_tmp, ignore_errors=True)
+
+        if print_info:
+            print('\nDetermining optimal chunk size for processing')
+        tc,yc,xc  = _determine_optimal_chuck_size(ds,
+                                                  print_info = print_info)
+        ds = xr.open_dataset(zarr_stack_fn,
+                             chunks={'time': tc, 'y': yc, 'x':xc},engine='zarr')
+
+        return ds
+
+def _determine_optimal_chuck_size(ds,
+                                  print_info = True):
+    if print_info:
+        print('\nDetermining optimal chunk size for processing')
+    ## set chunk size to 1 MB if single time series array < 1 MB in size
+    ## else increase to max of 1 GB chunk sizes.
+    
+    time_series_array_size = ds['band1'].sel(x=ds['band1'].x.values[0], 
+                                             y=ds['band1'].y.values[0]).nbytes
+    if time_series_array_size < 1e6:
+        chunk_size_limit = 2e6
+    elif time_series_array_size < 1e7:
+        chunk_size_limit = 2e7
+    elif time_series_array_size < 1e8:
+        chunk_size_limit = 2e8
+    else:
+        chunk_size_limit = 1e9
+    ds_size = ds['band1'].nbytes / 1e9
+    t = len(ds.time)
+    x = len(ds.x)
+    y = len(ds.y)
+    arr = ds['band1'].data.rechunk({0:-1, 1:'auto', 2:'auto'}, 
+                                                block_size_limit=chunk_size_limit, 
+                                                balance=True)
+    tc,yc,xc = arr.chunks[0][0], arr.chunks[1][0], arr.chunks[2][0]
+    chunksize = ds['band1'][:tc,:yc,:xc].nbytes / 1e6
+    if print_info:
+        print('Chunk shape:','('+','.join([str(x) for x in [tc,yc,xc]])+')')
+        print('Chunk size:',ds['band1'][:tc,:yc,:xc].nbytes, '('+str(chunksize)+'G)')
+    
+    return tc,yc,xc
+        
 def xr_stack_geotifs(geotif_files_list, 
                      datetimes_list, 
                      reference_geotif_file, 
@@ -298,6 +434,16 @@ def xr_stack_geotifs(geotif_files_list,
     ds = ds.sortby('time')
     return ds
 
+def dask_get_mapped_tasks(dask_array):
+    """
+    Finds tasks associated with chunked dask array.
+    """
+    # TODO There has to be a better way to do this...
+    txt = dask_array._repr_html_()
+    idx = txt.find('Tasks')
+    strings = txt[idx-20:idx].split(' ')
+    tasks_count = max([int(i) for i in strings if i.isdigit()])
+    return tasks_count
 
 def check_xr_rio_ds_match(ds1, ds2):
     """
