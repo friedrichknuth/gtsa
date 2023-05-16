@@ -91,7 +91,7 @@ def plot_cogs_sites(site_names,
         folium.Marker(location=site_marker_coords[site], 
                       popup=site_marker_names[site],
                       name=site_marker_names[site],
-                      icon=site_icon).add_to(m)
+                      icon=site_icon).add_to(m).add_to(feature_group)
     
     if fullscreen:
         plugins.Fullscreen(
