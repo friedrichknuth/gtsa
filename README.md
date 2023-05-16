@@ -9,9 +9,9 @@ $ mamba env create -f environment.yml
 $ conda activate gtsa
 $ pip install -e .
 ```
-## Examples
+## Example functionality
 
-Plotting 
+- Convert single band GeoTIFFs to Cloud Optimized GeoTIFFs (COGs)  
 - Create an [interactive map](https://staff.washington.edu/knuth/downloads/conus_sites.html) that efficiently visualizes many large rasters.
 
 
