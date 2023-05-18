@@ -5,8 +5,9 @@ import concurrent
 import shutil
 
 sites = ['baker', 'gnp', 'helens', 'rainier', 'hinman', 'scg', 'tetons']
+sites = ['gnp', ]
 base_directory = '/mnt/storage/knuth/sites/analysis_ready_data/'
-bucket = ''
+bucket = 'petrichor'
 product = 'dems'
 verbose = True
 overwrite = False
@@ -37,7 +38,6 @@ for s in sites:
             calls.append(call)
 
     if calls:
-#         print('yes')
         with tqdm(total=len(calls)) as pbar:
             pool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
             futures = {pool.submit(gtsa.io.run_command, x): x for x in calls}
@@ -86,6 +86,6 @@ for s in sites:
     print(call)
     gtsa.io.run_command(call,verbose=True)
     
-    
+print('DONE')
     
     

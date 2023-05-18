@@ -5,6 +5,7 @@ channels:
 dependencies:
   - awscli
   - s3fs
+  - aiohttp
   - numpy
   - scipy
   - matplotlib

@@ -204,6 +204,7 @@ def create_zarr_stack(xarray_dataset,
                       zarr_stack_file_name= 'stack.zarr',
                       overwrite = False,
                       print_info = True,
+                      cleanup = False,
                       ):
     
     ds = xarray_dataset
@@ -212,8 +213,6 @@ def create_zarr_stack(xarray_dataset,
     
     zarr_stack_fn  = Path(output_directory, zarr_stack_file_name)
     zarr_stack_tmp = Path(output_directory, 'stack_tmp.zarr')
-    print(zarr_stack_fn)
-    print(zarr_stack_tmp)
     
     if overwrite:
         shutil.rmtree(zarr_stack_fn, ignore_errors=True)
@@ -275,18 +274,17 @@ def create_zarr_stack(xarray_dataset,
 
         if print_info:
             print('\nRechunked zarr file info')
-            source_group = zarr.open(zarr_stack_file_name)
+            source_group = zarr.open(zarr_stack_fn)
             source_array = source_group['band1']
             print(source_group.tree())
             print(source_array.info)
             del source_group
             del source_array
-        if overwrite:
-            print('Removing temporary zarr stack')
+        if cleanup:
+            if print_info:
+                print('Removing temporary zarr stack')
             shutil.rmtree(zarr_stack_tmp, ignore_errors=True)
 
-        if print_info:
-            print('\nDetermining optimal chunk size for processing')
         tc,yc,xc  = _determine_optimal_chuck_size(ds,
                                                   print_info = print_info)
         ds = xr.open_dataset(zarr_stack_fn,
@@ -333,6 +331,7 @@ def xr_stack_geotifs(geotif_files_list,
                      save_to_nc=False,
                      nc_out_dir = None,
                      overwrite = True,
+                     cleanup = False,
                     ):
 
     """
