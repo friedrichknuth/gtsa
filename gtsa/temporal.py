@@ -25,6 +25,18 @@ import dask
 
 from gtsa import utils
 
+from sklearn.utils import all_estimators
+import inspect
+
+def check_sklearn_parallell_support():
+    # source: https://gist.github.com/rikturr/ca4449a87fcd512d3d846341949d1b34
+    has_n_jobs = []
+    for est in all_estimators():
+        s = inspect.signature(est[1])
+        if 'n_jobs' in s.parameters:
+            has_n_jobs.append(est)
+    print(has_n_jobs)
+
 def remove_nan_from_training_data(X_train, y_train_masked_array):
     array = y_train_masked_array.data
     mask = ~np.ma.getmaskarray(y_train_masked_array)
@@ -225,8 +237,10 @@ def GPR_glacier_kernel():
 #     kernel = RBF(5) + RBF(20) + RBF(100) * PairwiseKernel(1, metric='linear') 
     
     k1 = 30.0 * Matern(length_scale=10.0, nu=1.5)
+    k2 = ConstantKernel(30) * ExpSineSquared(length_scale=1, periodicity=30)
+    k3 = ConstantKernel(30) * ExpSineSquared(length_scale=1, periodicity=1)
     
-    kernel = k1
+    kernel = k1 + k2 + k3
 
     return kernel
 
@@ -280,6 +294,71 @@ def GPR_reshape_parallel_results(results, ma_stack, valid_mask_2D):
 
 
 """ Dask functions """
+
+def dask_GPR(DataArray, 
+             times = None,
+             kernel = None,
+             prediction_time_series = None,
+             alpha = 2,
+             count_thresh = 3, 
+             time_delta_min = None):
+    
+    # TODO change to isfinite
+    mask = ~np.isnan(DataArray)
+    
+    if count_thresh:
+        if np.sum(mask) < count_thresh:
+            a = prediction_time_series.copy()
+            a[:] = np.nan
+            return a, a
+    
+    if time_delta_min:
+        time_delta = max(times[mask]) - min(times[mask])
+        if time_delta < time_delta_min:
+            a = prediction_time_series.copy()
+            a[:] = np.nan
+            return a, a
+        
+    
+    model = GPR_model(times[mask], DataArray[mask], kernel, alpha=alpha)
+    
+    mean_prediction, std_prediction = GPR_predict(model, prediction_time_series)
+    
+    return mean_prediction, std_prediction
+    
+def dask_apply_GPR(DataArray, dim, kwargs=None):
+    results = xr.apply_ufunc(
+        dask_GPR,
+        DataArray,
+        kwargs=kwargs,
+        input_core_dims=[[dim]],
+        output_core_dims=[['new_time'], ['new_time']],
+        output_sizes={'new_time': len(kwargs['prediction_time_series'])},
+        output_dtypes=[float, float],
+        vectorize=True,
+        dask="parallelized")
+    
+    mean_prediction, std_prediction = results
+    mean_prediction = mean_prediction.rename({'new_time': 'time'})
+    mean_prediction = mean_prediction.assign_coords({"time": kwargs['prediction_time_series']})
+    mean_prediction = mean_prediction.transpose('time', 'y', 'x')
+
+    std_prediction = std_prediction.rename({'new_time': 'time'})
+    std_prediction = std_prediction.assign_coords({"time": kwargs['prediction_time_series']})
+    std_prediction = std_prediction.transpose('time', 'y', 'x')
+    
+    mean_prediction.data = mean_prediction.data.rechunk({0:'auto', 1:'auto', 2:'auto'},
+                                                          block_size_limit=1e8, 
+                                                          balance=True)
+    std_prediction.data = std_prediction.data.rechunk({0:'auto', 1:'auto', 2:'auto'},
+                                                          block_size_limit=1e8, 
+                                                          balance=True)
+    
+    ds = xr.Dataset({'mean_prediction':mean_prediction,
+                     'std_prediction':std_prediction})
+    
+    return ds
+
 
 def dask_linreg(DataArray, times = None, count_thresh = None, time_delta_min = None):
     """

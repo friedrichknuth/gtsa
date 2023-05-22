@@ -331,7 +331,7 @@ def plot_time_series_gallery(
             except:
                 std_df = None
 
-            for i, series in df.iteritems():
+            for i, series in df.items():
                 ax = axes[i]
                 try:
                     series.plot(ax=ax, c="C" + str(idx + 1), label=legend_labels[idx + 1])

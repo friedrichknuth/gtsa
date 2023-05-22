@@ -207,6 +207,8 @@ def create_zarr_stack(xarray_dataset,
                       cleanup = False,
                       ):
     
+    # TODO - writing to zarr with ds.rio.crs assigned fails - not sure how to preserve the crs in the saved file
+    
     ds = xarray_dataset
     output_directory = Path(output_directory)
     output_directory.mkdir(parents=True, exist_ok=True)
@@ -229,7 +231,7 @@ def create_zarr_stack(xarray_dataset,
             del source_group
             del source_array
         
-        tc,yc,xc  = _determine_optimal_chuck_size(ds,
+        tc,yc,xc  = determine_optimal_chuck_size(ds,
                                                   print_info = print_info)
         ds = xr.open_dataset(zarr_stack_fn,
                              chunks={'time': tc, 'y': yc, 'x':xc},engine='zarr')
@@ -269,7 +271,7 @@ def create_zarr_stack(xarray_dataset,
         t,y,x = arr.chunks[0][0], arr.chunks[1][0], arr.chunks[2][0]
         ds = xr.open_dataset(zarr_stack_tmp,
                              chunks={'time': t, 'y': y, 'x':x},engine='zarr')
-        ds['band1'].encoding = {'chunks': (t, y, x)}
+        ds['band1'].encoding = {'chunks': (t, y, x)}  
         ds.to_zarr(zarr_stack_fn)
 
         if print_info:
@@ -285,15 +287,15 @@ def create_zarr_stack(xarray_dataset,
                 print('Removing temporary zarr stack')
             shutil.rmtree(zarr_stack_tmp, ignore_errors=True)
 
-        tc,yc,xc  = _determine_optimal_chuck_size(ds,
+        tc,yc,xc  = determine_optimal_chuck_size(ds,
                                                   print_info = print_info)
         ds = xr.open_dataset(zarr_stack_fn,
                              chunks={'time': tc, 'y': yc, 'x':xc},engine='zarr')
 
         return ds
 
-def _determine_optimal_chuck_size(ds,
-                                  print_info = True):
+def determine_optimal_chuck_size(ds,
+                                 print_info = True):
     if print_info:
         print('\nDetermining optimal chunk size for processing')
     ## set chunk size to 1 MB if single time series array < 1 MB in size

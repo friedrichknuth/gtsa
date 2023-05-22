@@ -124,3 +124,11 @@ def xr_extract_ma_arrays_at_coords(da, x_coords, y_coords):
         ma_arrays.append(np.ma.masked_invalid(sub.values))
     ma_stack = np.ma.stack(ma_arrays, axis=1)
     return ma_stack
+
+def find_step_in_array(arr):
+    step = []
+    for i,v in enumerate(arr):
+        if i < len(arr)-1:
+            step.append(arr[i+1] - arr[i])
+    
+    return(list(set(step)))
