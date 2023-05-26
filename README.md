@@ -33,8 +33,3 @@ Below are example functionalities provided by gtsa. Each example is accompanied 
 - Convert single band GeoTIFFs to Cloud Optimized GeoTIFFs (COGs) for efficient visualization, e.g. as seen in this [interactive map](https://staff.washington.edu/knuth/downloads/conus_sites.html).
     - notebooks/make_cog_map.ipynb
     - scripts/create_cogs.py
-    
-
-## Contributing
-
-Example [workflow](https://github.com/friedrichknuth/gtsa/wiki/Git-workflow-for-teams) to create a fork/branch, preserve/push dev code, and send a PRs to main when ready for review and sharing.
