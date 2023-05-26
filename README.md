@@ -1,7 +1,16 @@
 # Geospatial Time Series Analysis
-Methods to compute continuous surface elevation change from temporally and spatially sparse elevation measurements.
+Methods to compute continuous per-pixel raster change from temporally and spatially sparse measurements.
 
 ## Installation
+
+Download and install [Miniconda](https://docs.conda.io/en/latest/miniconda.html)  
+
+After installing Miniconda set up [Mamba](https://mamba.readthedocs.io/en/latest/installation.html) (optional but recommended)
+```
+$ conda install mamba -n base -c conda-forge
+```
+Clone the repo and set up the conda environment  
+
 ```
 $ git clone https://github.com/friedrichknuth/gtsa.git
 $ cd ./gtsa
@@ -9,34 +18,23 @@ $ mamba env create -f environment.yml
 $ conda activate gtsa
 $ pip install -e .
 ```
-## Example functionality
+## Examples
 
-- Convert single band GeoTIFFs to Cloud Optimized GeoTIFFs (COGs)  
-- Create an [interactive map](https://staff.washington.edu/knuth/downloads/conus_sites.html) that efficiently visualizes many large rasters.
+Below are example functionalities provided by gtsa. Each example is accompanied by a jupyter notebook and python script. The notebooks help illustrate the steps performed in the corresponding script.
 
+- Stack single band rasters and chunk along the time dimension for efficient regression analysis
+    - notebooks/create_stacks.py
+    - scripts/create_stacks.py
 
-## Data
-Analysis ready DEMs are staged [here](https://drive.google.com/drive/folders/1AMqnuMVYCa0xzwDOiowGAwd8iV63kSjf).  
-
-Example download with provided script:
-```
-$ conda activate gtsa
-$ cd ./gtsa/scripts
-$ python -u download_staged_data.py -site rainier -earthdem -hsfm
-```
-Additional auxiliary data are staged [here](https://drive.google.com/drive/folders/19luPMbR8j-Jm05Z1nMCD4q_BGHNC5vHa)
-
-## Content
-
-__./gtsa__  
-Main python library with custom functions developed for these analysis methods.
-
-__./notebooks__  
-Example Jupyter notebooks that describe the analysis steps and showcase functionality.
-
-__./scripts__  
-Utilities to download data, process at scale, and produce standard figures.
+- Run memory-efficient regression analysis methods using dask
+    - notebooks/fit_regression_to_stack.ipynb
+    - scripts/run_regression.py
+    
+- Convert single band GeoTIFFs to Cloud Optimized GeoTIFFs (COGs) for efficient visualization, e.g. as seen in this [interactive map](https://staff.washington.edu/knuth/downloads/conus_sites.html).
+    - notebooks/make_cog_map.ipynb
+    - scripts/create_cogs.py
+    
 
 ## Contributing
 
-Example [workflow](https://github.com/friedrichknuth/gtsa/wiki/Git-workflow-for-teams) to create a branch, push/preserve dev code, and send a PRs to main when ready for review and sharing.
+Example [workflow](https://github.com/friedrichknuth/gtsa/wiki/Git-workflow-for-teams) to create a fork/branch, preserve/push dev code, and send a PRs to main when ready for review and sharing.

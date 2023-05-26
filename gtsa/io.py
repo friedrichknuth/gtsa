@@ -141,25 +141,6 @@ def dask_get_mapped_tasks(dask_array):
     tasks_count = max([int(i) for i in strings if i.isdigit()])
     return tasks_count
 
-# def stack_geotif_arrays(geotif_files_list):
-#     """
-#     Simple function to stack raster arrays. Assumes these are already aligned.
-#     Inputs
-#     ----------
-#     geotif_files_list : list of GeoTIFF files
-#     Returns
-#     -------
-#     ma_stack : numpy.ma.core.MaskedArray
-#     """
-#     arrays = []
-#     for i in geotif_files_list:
-#         src = gu.georaster.Raster(i)
-#         masked_array = src.data
-#         arrays.append(masked_array)
-#     ma_stack = np.ma.vstack(arrays)
-#     return ma_stack
-
-
 
 def xr_read_geotif(geotif_file_path, chunks='auto', masked=True):
     """
