@@ -1,8 +1,10 @@
 name: gtsa
 channels:
   - conda-forge
-#   - oggm
+  - oggm
 dependencies:
+  - oggm
+  - oggm-deps
   - awscli
   - s3fs
   - aiohttp
@@ -22,20 +24,3 @@ dependencies:
   - zarr
   - tqdm
   - pip
-  
-#   - toml
-#   - oggm
-#   - oggm-deps
-
-#   - jupyterlab
-
-#   - holoviews
-#   - geoviews
-#   - datashader
-#   - gdown
-  # dev requirements
-#   - pytest
-#   pip
-#   - pip:
-#     - -e "git+https://github.com/GlacioHack/GeoUtils.git@main#egg=geoutils"
-#     - -e "git+https://github.com/GlacioHack/xdem.git@main#egg=xdem"

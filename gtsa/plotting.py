@@ -285,7 +285,9 @@ def plot_array_gallery(array_3d,
 def plot_time_series_gallery(
     x_values,
     y_values,
-    labels=None,
+    masked_x_values=None,
+    masked_y_values=None,
+    titles=None,
     predictions_df_list=None,
     std_df_list=None,
     x_ticks_off=False,
@@ -299,7 +301,7 @@ def plot_time_series_gallery(
     legend=True,
     linestyle="none",
     legend_labels=[
-        "Observations",
+        'Obs','Obs filt', 'Obs mean', 'Prediction', 'Prediction STD',
     ],
     random_choice = False,
     output_file = None,
@@ -310,20 +312,26 @@ def plot_time_series_gallery(
     fig = plt.figure(figsize=figsize)
     axes = []
     for i in range(rows * columns):
-        try:
-            x, y = x_values[i], y_values[i]
-            ax = plt.subplot(rows, columns, i + 1, aspect="auto")
-            ax.plot(x, y, marker="o", c="b", linestyle=linestyle, label=legend_labels[0])
-            if random_choice:
-                random_index = np.random.choice(np.arange(x.size))
-                ax.plot(x[random_index], y[random_index], marker="o", c="r", linestyle=linestyle)
-            if x_ticks_off:
-                ax.set_xticks(())
-            if y_ticks_off:
-                ax.set_yticks(())
-            axes.append(ax)
-        except:
-            pass
+#         try:
+        x, y = x_values[i], y_values[i]
+        ax = plt.subplot(rows, columns, i + 1, aspect="auto")
+        ax.plot(x, y, marker="o", c="b", linestyle=linestyle, label=legend_labels[0])
+        if masked_x_values:
+            fx,fy = masked_x_values[i], masked_y_values[i]
+            ax.plot(fx, fy, marker="o", c="r", linestyle=linestyle, label=legend_labels[1])
+        if random_choice:
+            random_index = np.random.choice(np.arange(x.size))
+            ax.plot(x[random_index], y[random_index], marker="o", c="r", linestyle=linestyle)
+        if x_ticks_off:
+            ax.set_xticks(())
+        if y_ticks_off:
+            ax.set_yticks(())
+
+        ax.axhline(np.mean(y_values[i]),color='k',alpha=0.2, label=legend_labels[2])
+        axes.append(ax)
+            
+#         except:
+#             pass
     if not isinstance(predictions_df_list, type(None)):
         for idx, df in enumerate(predictions_df_list):
             try:
@@ -334,9 +342,9 @@ def plot_time_series_gallery(
             for i, series in df.items():
                 ax = axes[i]
                 try:
-                    series.plot(ax=ax, c="C" + str(idx + 1), label=legend_labels[idx + 1])
+                    series.plot(ax=ax, c="C" + str(idx + 1), label=legend_labels[idx + 3])
                 except:
-                    series.plot(ax=ax, c="C" + str(idx + 1), label="Observations")
+                    series.plot(ax=ax, c="C" + str(idx + 1), label=legend_labels[idx + 1])
                 if not isinstance(std_df, type(None)):
                     x = series.index.values
                     y = series.values
@@ -346,13 +354,13 @@ def plot_time_series_gallery(
                         y - 1.96 * std_prediction,
                         y + 1.96 * std_prediction,
                         alpha=0.2,
-                        label=legend_labels[idx + 2],
+                        label=legend_labels[idx + 4],
                         color="C" + str(idx + 1),
                     )
 
-    if labels:
+    if titles:
         for i, ax in enumerate(axes):
-            ax.set_title(labels[i])
+            ax.set_title(titles[i])
 
     if legend:
         axes[0].legend(loc='lower left')
@@ -400,10 +408,6 @@ def plot_time_series_gallery(
     if ylim:
         for ax in axes:
             ax.set_ylim(ylim[0],ylim[1])
-    
-    else:
-        for ax in axes:
-            ax.axhline(0,color='k',alpha=0.2)
             
     plt.tight_layout()
     

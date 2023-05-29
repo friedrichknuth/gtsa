@@ -91,7 +91,7 @@ def parse_timestamps(file_list,
 def parse_hsfm_timestamps(file_list):
     date_times = []
     for i in file_list:
-        parts = i.name.split('_')
+        parts = Path(i).name.split('_')
         for p in parts:
             if '-' in p:
                 date_times.append(p)
@@ -101,7 +101,7 @@ def parse_hsfm_timestamps(file_list):
 def parse_earthdem_timestamps(file_list):
     date_times = []
     for i in file_list:
-        parts = i.name.split('_')
+        parts = Path(i).name.split('_')
         date_times.append(parts[1])
                 
     return [datetime.strptime(i, "%Y%m%d") for i in date_times]
