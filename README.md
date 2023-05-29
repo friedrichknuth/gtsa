@@ -20,16 +20,20 @@ $ pip install -e .
 ```
 ## Examples
 
-Below are example functionalities provided by gtsa. Each example is accompanied by a jupyter notebook and python script. The notebooks help illustrate the steps performed in the corresponding script.
+Each example is accompanied by a jupyter notebook and python script.  
+The notebooks help illustrate the steps performed in the corresponding script.  
 
-- Stack single band rasters and chunk along the time dimension for efficient regression analysis
-    - notebooks/create_stacks.py
-    - scripts/create_stacks.py
+#### Raster stacking
+Stack single band rasters and chunk along the time dimension for efficient regression analysis
+- notebooks/create_stacks.py
+- scripts/create_stacks.py
 
-- Run memory-efficient regression analysis methods using dask
-    - notebooks/fit_regression_to_stack.ipynb
-    - scripts/run_regression.py
+#### Time-series regression analysis
+Run memory-efficient regression analysis methods using dask
+- notebooks/fit_regression_to_stack.ipynb
+- scripts/run_regression.py
     
-- Convert single band GeoTIFFs to Cloud Optimized GeoTIFFs (COGs) for efficient visualization, e.g. as seen in this [interactive map](https://staff.washington.edu/knuth/downloads/conus_sites.html).
-    - notebooks/make_cog_map.ipynb
-    - scripts/create_cogs.py
+#### Visualization
+Convert single band GeoTIFFs to Cloud Optimized GeoTIFFs (COGs) for efficient visualization, e.g. as seen in this [interactive map](https://staff.washington.edu/knuth/downloads/conus_sites.html).
+- notebooks/make_cog_map.ipynb
+- scripts/create_cogs.py
