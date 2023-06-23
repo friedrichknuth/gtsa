@@ -2,6 +2,7 @@ import multiprocessing as mp
 
 import matplotlib
 import numpy as np
+import numbers
 import pandas as pd
 import psutil
 from sklearn import linear_model
@@ -230,21 +231,15 @@ def GPR_huggonet_kernel():
     return(kernel)
 
 def GPR_kernel_smoother():
-    k1 = 30.0 * Matern(length_scale=10.0, nu=1.5)
-    kernel = k1
+    kernel = 30.0 * Matern(length_scale=10.0, nu=1.5)
     return kernel
 
 def GPR_kernel_projection_decadal():
-    k1 = GPR_kernel_smoother()
-    k2 = ConstantKernel(30) * ExpSineSquared(length_scale=1, periodicity=30)
-    kernel = k1+k2
+    kernel = ConstantKernel(30) * ExpSineSquared(length_scale=1, periodicity=30)
     return kernel
 
 def GPR_kernel_projection_seasonal():
-    k1 = GPR_kernel_smoother()
-    k2 = GPR_kernel_projection_decadal()
-    k3 = ConstantKernel(30) * ExpSineSquared(length_scale=1, periodicity=1)
-    kernel = k1 + k3
+    kernel = ConstantKernel(30) * ExpSineSquared(length_scale=1, periodicity=1)
     return kernel
     
     
@@ -320,10 +315,33 @@ def dask_GPR(DataArray,
              prediction_time_series = None,
              alpha = 2,
              count_thresh = 3, 
-             time_delta_min = None):
+             time_delta_min = None,
+             apply_filter = False):
     
-    # TODO change to isfinite
-    mask = ~np.isnan(DataArray)
+    # assign array of uncertainty values for each data point
+    if isinstance(alpha, numbers.Number):
+        alphas = np.full(len(DataArray),alpha)
+    elif len(alpha) == len(DataArray):
+        alphas = alpha
+        
+    mask = np.isfinite(DataArray)
+    
+    data_array = DataArray[mask]
+    time_array = times[mask]
+    alpha_array = alphas[mask]
+    
+    if apply_filter:
+        
+#         mask = mask_outliers_rate_of_change(time_array,
+#                                             data_array,
+#                                             threshold = 100)
+        
+        mask = mask_outliers_gaussian_process(time_array,
+                                             data_array,
+                                             alpha_array)
+        data_array = data_array[mask]
+        time_array = time_array[mask]
+        alpha_array = alpha_array[mask]
     
     if count_thresh:
         if np.sum(mask) < count_thresh:
@@ -332,14 +350,14 @@ def dask_GPR(DataArray,
             return a, a
     
     if time_delta_min:
-        time_delta = max(times[mask]) - min(times[mask])
+        time_delta = max(time_array) - min(time_array)
         if time_delta < time_delta_min:
             a = prediction_time_series.copy()
             a[:] = np.nan
             return a, a
         
     
-    model = GPR_model(times[mask], DataArray[mask], kernel, alpha=alpha)
+    model = GPR_model(time_array, data_array, kernel, alpha=alpha_array)
     
     mean_prediction, std_prediction = GPR_predict(model, prediction_time_series)
     
@@ -440,29 +458,31 @@ def dask_apply_func(DataArray, func):
         dask="allowed",)
     return result
 
-def xr_dask_count(ds):
+def xr_dask_count(ds,
+                 variable_name = 'band1'):
     """
     Computes count along time axis in x, y, time in dask.array.core.Array.
     
     Returns xr.DataArray with x, y dims.
     """
-    arr_count = dask_apply_func(ds['band1'].data, apply_count).compute()
+    arr_count = dask_apply_func(ds[variable_name].data, apply_count).compute()
     arr_count = np.ma.masked_where(arr_count==0,arr_count)
     
-    count_da = ds['band1'].isel(time=0).drop('time')
+    count_da = ds[variable_name].isel(time=0).drop('time')
     count_da.values = arr_count
     count_da.name = 'count'
     
     return count_da
     
-def xr_dask_nmad(ds):
+def xr_dask_nmad(ds,
+                 variable_name = 'band1'):
     """
     Computes NMAD along time axis in x, y, time in dask.array.core.Array.
     
     Returns xr.DataArray with x, y dims.
     """
-    arr_nmad = dask_apply_func(ds['band1'].data, apply_nmad).compute()
-    nmad_da = ds['band1'].isel(time=0).drop('time')
+    arr_nmad = dask_apply_func(ds[variable_name].data, apply_nmad).compute()
+    nmad_da = ds[variable_name].isel(time=0).drop('time')
     nmad_da.values = arr_nmad
     nmad_da.name   = 'nmad'
     
