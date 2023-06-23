@@ -8,6 +8,18 @@ from shapely.geometry import Point, Polygon
 import concurrent
 
 
+def df_xy_coords_to_gdf(df, 
+                         lon='lon',
+                         lat='lat',
+                         epsg_code='4326'):
+    """
+    Function to convert pandas dataframe containing lat, lon coordinates to geopandas dataframe.
+    """
+    geometry = [Point(xy) for xy in zip(df[lon], df[lat])]
+    gdf = gpd.GeoDataFrame(df,geometry=geometry, crs='epsg:'+epsg_code)
+    
+    return gdf
+
 def bounds2polygon(xmin, xmax, ymin, ymax, 
                     epsg_code='4326'):
     """
