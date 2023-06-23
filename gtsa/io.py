@@ -85,7 +85,7 @@ def parse_timestamps(file_list,
         try:
             results.append(tmp.search(x).group(0))
         except:
-            print('pattern not find in',x)
+            print('pattern not found in',x)
     return results
 
 def parse_hsfm_timestamps(file_list):
@@ -182,6 +182,7 @@ def xr_read_geotif(geotif_file_path, chunks='auto', masked=True):
 
 def create_zarr_stack(xarray_dataset,
                       output_directory = './',
+                      variable_name = 'band1',
                       zarr_stack_file_name= 'stack.zarr',
                       overwrite = False,
                       print_info = True,
@@ -206,7 +207,7 @@ def create_zarr_stack(xarray_dataset,
             print('\nZarr file exists')
             print('\nZarr file info')
             source_group = zarr.open(zarr_stack_fn)
-            source_array = source_group['band1']
+            source_array = source_group[variable_name]
             print(source_group.tree())
             print(source_array.info)
             del source_group
@@ -236,7 +237,7 @@ def create_zarr_stack(xarray_dataset,
 
         if print_info:
             source_group = zarr.open(zarr_stack_tmp)
-            source_array = source_group['band1']
+            source_array = source_group[variable_name]
             print(source_group.tree())
             print(source_array.info)
             del source_group
@@ -246,19 +247,19 @@ def create_zarr_stack(xarray_dataset,
             print('Rechunking temporary zarr stack and saving as')
             print(str(zarr_stack_fn))
 
-        arr = ds['band1'].data.rechunk({0:-1, 1:'auto', 2:'auto'}, 
+        arr = ds[variable_name].data.rechunk({0:-1, 1:'auto', 2:'auto'}, 
                                                     block_size_limit=1e8, 
                                                     balance=True)
         t,y,x = arr.chunks[0][0], arr.chunks[1][0], arr.chunks[2][0]
         ds = xr.open_dataset(zarr_stack_tmp,
                              chunks={'time': t, 'y': y, 'x':x},engine='zarr')
-        ds['band1'].encoding = {'chunks': (t, y, x)}  
+        ds[variable_name].encoding = {'chunks': (t, y, x)}  
         ds.to_zarr(zarr_stack_fn)
 
         if print_info:
             print('\nRechunked zarr file info')
             source_group = zarr.open(zarr_stack_fn)
-            source_array = source_group['band1']
+            source_array = source_group[variable_name]
             print(source_group.tree())
             print(source_array.info)
             del source_group
@@ -276,14 +277,17 @@ def create_zarr_stack(xarray_dataset,
         return ds
 
 def determine_optimal_chuck_size(ds,
+                                 variable_name = 'band1',
+                                 x_dim = 'x',
+                                 y_dim = 'y',
                                  print_info = True):
     if print_info:
         print('\nDetermining optimal chunk size for processing')
     ## set chunk size to 1 MB if single time series array < 1 MB in size
     ## else increase to max of 1 GB chunk sizes.
     
-    time_series_array_size = ds['band1'].sel(x=ds['band1'].x.values[0], 
-                                             y=ds['band1'].y.values[0]).nbytes
+    time_series_array_size = ds[variable_name].sel({x_dim: ds[variable_name][x_dim].values[0],
+                                                    y_dim: ds[variable_name][y_dim].values[0]}).nbytes
     if time_series_array_size < 1e6:
         chunk_size_limit = 2e6
     elif time_series_array_size < 1e7:
@@ -292,18 +296,18 @@ def determine_optimal_chuck_size(ds,
         chunk_size_limit = 2e8
     else:
         chunk_size_limit = 1e9
-    ds_size = ds['band1'].nbytes / 1e9
+    ds_size = ds[variable_name].nbytes / 1e9
     t = len(ds.time)
-    x = len(ds.x)
-    y = len(ds.y)
-    arr = ds['band1'].data.rechunk({0:-1, 1:'auto', 2:'auto'}, 
+    x = len(ds[x_dim])
+    y = len(ds[y_dim])
+    arr = ds[variable_name].data.rechunk({0:-1, 1:'auto', 2:'auto'}, 
                                                 block_size_limit=chunk_size_limit, 
                                                 balance=True)
     tc,yc,xc = arr.chunks[0][0], arr.chunks[1][0], arr.chunks[2][0]
-    chunksize = ds['band1'][:tc,:yc,:xc].nbytes / 1e6
+    chunksize = ds[variable_name][:tc,:yc,:xc].nbytes / 1e6
     if print_info:
         print('Chunk shape:','('+','.join([str(x) for x in [tc,yc,xc]])+')')
-        print('Chunk size:',ds['band1'][:tc,:yc,:xc].nbytes, '('+str(chunksize)+'G)')
+        print('Chunk size:',ds[variable_name][:tc,:yc,:xc].nbytes, '('+str(chunksize)+' G)')
     
     return tc,yc,xc
         
