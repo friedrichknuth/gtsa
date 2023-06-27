@@ -7,6 +7,7 @@ dependencies:
   - oggm-deps
   - awscli
   - s3fs
+  - fsspec
   - aiohttp
   - numpy
   - scipy
