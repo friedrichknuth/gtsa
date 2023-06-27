@@ -3,6 +3,9 @@ from bs4 import BeautifulSoup
 from pathlib import Path
 import requests
 import shutil
+import psutil
+from tqdm import tqdm
+import concurrent
 # import gdown
 
 def download_rgi_01_02(output_directory = '../data/rgi',
@@ -258,4 +261,96 @@ def download_usgs_geodetic_data(output_directory = '../data/usgs_geodetic',
                 print('Writing to', str(out.resolve()))
                 open(out, 'wb').write(r.content)
 
+def download_hi_res_test_data(site = 'mount-baker',
+                              output_directory = 'test_data',
+                              overwrite = False,
+                              max_workers = None,
+                             ):
+    '''
+    Downloads 1m DEMs from https://zenodo.org/record/7297154
+    
+    input options:
+    site : 'mount-baker' or 'south-cascade'
+    '''
         
+    if site != 'mount-baker' and site != 'south-cascade':
+        print("site must be specified as either 'baker' or 'south-cascade'")
+        return
+
+    else:
+        print('Downloading data from https://zenodo.org/record/7297154 for', site)
+        
+        if not max_workers:
+            max_workers = psutil.cpu_count(logical=True)-1
+
+        if overwrite:
+            print('overwrite set to True')
+        else:
+            print('overwrite set to False')
+        
+        base = 'https://zenodo.org/'
+        url  = base + 'record/7297154'
+
+        reqs = requests.get(url)
+        soup = BeautifulSoup(reqs.text, 'html.parser')
+
+        output_directory = Path(output_directory,site+'_1m_dems')
+        output_directory.mkdir(parents=True, exist_ok=True)
+        
+        urls = []
+        for link in soup.find_all('a'):
+            url = link.get('href')
+            if url:
+                if '1m_dem' in url and site in url:
+                    urls.append(base+url[1:])
+        urls = sorted(set(urls))
+        outputs = [Path(output_directory,
+                        url.split('/')[-1].split('?')[0]) for url in urls]
+        
+        payload = []
+        omissions = []
+        for i,v in enumerate(outputs):
+            if v.exists() and not overwrite:
+                omissions.append(str(v))
+            else:
+                zipped = list(zip([urls[i],str(v)]))
+                payload.append((zipped[0][0], zipped[1][0]))
+                
+        if omissions:
+            print('Skipping:')
+            for i in omissions:
+                print(i)
+            
+        if payload:
+            print('Downloading:')
+            for i in payload:
+                print(i[0])
+            print('Writing to', str(output_directory))
+
+            thread_downloads(output_directory, 
+                             payload,
+                             max_workers=max_workers,
+                            )
+
+                
+def download_test_data(output_directory,
+                       payload):
+    url, out = payload
+    r = requests.get(url)
+    open(out, 'wb').write(r.content)
+    return out
+        
+def thread_downloads(output_directory, 
+                     payload,
+                     max_workers= None):
+    
+    if not max_workers:
+        max_workers = psutil.cpu_count(logical=True)-1
+    
+    with tqdm(total=len(payload)) as pbar:
+        pool = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
+        future_to_url = {pool.submit(download_test_data,
+                                     output_directory,
+                                     x): x for x in payload}
+        for future in concurrent.futures.as_completed(future_to_url):
+            pbar.update(1)
