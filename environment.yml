@@ -25,4 +25,7 @@ dependencies:
   - zarr
   - tqdm
   - pytest
+  - ipykernel
+  - jupyter
+  - nb_conda_kernels
   - pip
