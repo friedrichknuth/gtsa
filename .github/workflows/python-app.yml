@@ -29,9 +29,11 @@ jobs:
         python -m pip install --upgrade pip
         # python -m pip install flake8 pytest pytest-cov
         conda install mamba -c conda-forge
-        mamba env create -f environment.yml
+        mamba env update --file environment.yml --name gtsa
+        source $CONDA/etc/profile.d/conda.sh
         conda activate gtsa
-        pip install pytest .
+        mamba install pytest
+        pip install .
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 #     - name: Lint with flake8
 #       run: |
