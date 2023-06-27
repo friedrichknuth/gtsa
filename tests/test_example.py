@@ -1,3 +1,3 @@
 
-def test_add():
-    assert 1+2 == 3
+def test_import():
+    import gtsa
