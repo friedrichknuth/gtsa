@@ -6,7 +6,7 @@ import shutil
 import psutil
 from tqdm import tqdm
 import concurrent
-# import gdown
+import gdown
 
 def download_rgi_01_02(output_directory = '../data/rgi',
                        region           = 'all',
@@ -261,6 +261,50 @@ def download_usgs_geodetic_data(output_directory = '../data/usgs_geodetic',
                 print('Writing to', str(out.resolve()))
                 open(out, 'wb').write(r.content)
 
+def download_hi_res_refdems(site = 'mount-baker',
+                            output_directory = 'test_data',
+                            overwrite = False,
+                            verbose = True,
+                             ):
+    '''
+    Downloads reference DEMs for DEMs at https://zenodo.org/record/7297154
+    
+    input options:
+    site : 'mount-baker' or 'south-cascade'
+    '''
+    scg = '1m1DSnZ7tNIko6iU4WuPFsDODLkHX-E-6'
+    scg_fn = 'WV_south-cascade_20151014_1m_dem.tif'
+    baker = '1SXwGmjkjp3oCuF64XM9j894YJBR8bzs9'
+    baker_fn = 'WADNR_mount-baker_20150827_1m_dem.tif'
+    
+    output_directory = Path(output_directory,site+'_1m_dems')
+    output_directory.mkdir(parents=True, exist_ok=True)
+
+        
+    if site == 'mount-baker':
+        blob_id = baker
+        output = Path(output_directory, baker_fn)
+    elif site == 'south-cascade':
+        blob_id = scg
+        output = Path(output_directory, scg_fn)
+    else:
+        print("site must be specified as either 'baker' or 'south-cascade'")
+        return
+    
+    if overwrite:
+        print('overwrite set to True')
+    else:
+        print('overwrite set to False')
+        
+    if output.exists() and not overwrite:
+        print('File exists')
+        print(output.as_posix())
+    
+    else:
+        gdown.download(id=blob_id, output=output.as_posix(), quiet=not verbose)
+        
+    return
+
 def download_hi_res_test_data(site = 'mount-baker',
                               output_directory = 'test_data',
                               overwrite = False,
@@ -332,7 +376,6 @@ def download_hi_res_test_data(site = 'mount-baker',
                              max_workers=max_workers,
                             )
 
-                
 def download_test_data(output_directory,
                        payload):
     url, out = payload

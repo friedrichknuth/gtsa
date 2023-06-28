@@ -8,6 +8,7 @@ dependencies:
   - awscli
   - s3fs
   - fsspec
+  - gdown
   - aiohttp
   - numpy
   - scipy
