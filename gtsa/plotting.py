@@ -28,8 +28,9 @@ def plot_cogs_sites(payload,
                     print_info           = False,
                     ):
     
-    site_names = payload['sites'].keys()
+    site_names = list(payload['sites'].keys())
     cog_urls_by_site = [payload['sites'][i]['cog_urls'] for i in site_names]
+    cog_names_by_site = [payload['sites'][i]['cog_names'] for i in site_names]
     site_marker_coords = [payload['sites'][i]['marker_coords'] for i in site_names]
     site_marker_names = [payload['sites'][i]['marker_name'] for i in site_names]
     cog_overview_indices = [payload['sites'][i]['overview_index'] for i in site_names]
@@ -57,8 +58,8 @@ def plot_cogs_sites(payload,
     for i, cog_urls in enumerate(cog_urls_by_site):
         site = site_names[i]
         cog_names = cog_names_by_site[i]
-        overview_cog_index = cog_overview_indices[site]
-        feature_group = folium.FeatureGroup(site_marker_names[site])
+        overview_cog_index = cog_overview_indices[i]
+        feature_group = folium.FeatureGroup(site_marker_names[i])
         feature_group.add_to(m)
         
         for j,cog_url in enumerate(cog_urls):
@@ -88,9 +89,9 @@ def plot_cogs_sites(payload,
                                          border_color='transparent', 
                                          inner_icon_style="color:blue;font-size:300%")
 
-        folium.Marker(location=site_marker_coords[site], 
-                      popup=site_marker_names[site],
-                      name=site_marker_names[site],
+        folium.Marker(location=site_marker_coords[i], 
+                      popup=site_marker_names[i],
+                      name=site_marker_names[i],
                       icon=site_icon).add_to(m).add_to(feature_group)
     
     if fullscreen:
