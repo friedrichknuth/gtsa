@@ -1,7 +1,7 @@
 import gtsa
 
 sites = ['mount-baker', 'south-cascade']
-output_directory = 'test_data'
+output_directory = '../test_data'
 include_refdem = True
 overwrite = True
 
