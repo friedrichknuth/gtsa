@@ -297,18 +297,21 @@ def download_hi_res_refdems(site = 'mount-baker',
         print('overwrite set to False')
         
     if output.exists() and not overwrite:
-        print('File exists')
+        print('Reference DEM file exists')
         print(output.as_posix())
     
     else:
+        print('Downloading reference dem for', site)
         gdown.download(id=blob_id, output=output.as_posix(), quiet=not verbose)
         
     return
 
 def download_hi_res_test_data(site = 'mount-baker',
                               output_directory = 'test_data',
+                              include_refdem = True,
                               overwrite = False,
                               max_workers = None,
+                              verbose = True,
                              ):
     '''
     Downloads 1m DEMs from https://zenodo.org/record/7297154
@@ -322,6 +325,14 @@ def download_hi_res_test_data(site = 'mount-baker',
         return
 
     else:
+        
+        if include_refdem:
+            download_hi_res_refdems(site = site,
+                                    output_directory = output_directory,
+                                    overwrite = overwrite,
+                                    verbose = verbose,
+                                   )
+        
         print('Downloading data from https://zenodo.org/record/7297154 for', site)
         
         if not max_workers:

@@ -23,6 +23,11 @@ $ pip install -e .
 Each example is accompanied by a jupyter notebook and python script.  
 The notebooks help illustrate the steps performed in the corresponding script.  
 
+#### Download test data
+Downloads historical DEMs for Mount Baker and South Cascade Glacier
+- notebooks/download_test_data.py
+- scripts/download_test_data.py
+
 #### Raster stacking
 Stack single band rasters and chunk along the time dimension for efficient regression analysis
 - notebooks/create_stacks.py
