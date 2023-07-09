@@ -24,7 +24,7 @@ def parse_urls_from_S3_bucket(s3_bucket_name,
                               extension = 'tif',
                              ):
     
-    fs = fsspec.filesystem('s3')
+    fs = fsspec.filesystem('s3', anon=True)
     bucket = 's3://'+Path(s3_bucket_name, folder).as_posix()
     base_url = Path(s3_bucket_name+'.'+aws_server_url,folder).as_posix()
     file_names  = [x.split('/')[-1] for x in fs.ls(bucket) if extension in x]
@@ -33,7 +33,7 @@ def parse_urls_from_S3_bucket(s3_bucket_name,
     return urls
 
 def _get_test_sites(s3_bucket_name):
-    fs = fsspec.filesystem('s3')
+    fs = fsspec.filesystem('s3', anon=True)
     bucket ='s3://'+s3_bucket_name
     sites = [x.split('/')[-1] for x in fs.ls(bucket)]
     return sites

@@ -12,15 +12,8 @@ from folium import plugins
 
 from gtsa import geospatial
 
-def plot_cogs_sites(site_names,
-                    cog_urls_by_site,
-                    cog_names_by_site,
+def plot_cogs_sites(payload,
                     html_file_name       = None,
-                    site_marker_coords   = None,
-                    site_marker_names    = None,
-                    cog_overview_indices = None,
-                    map_center_lon       = None,
-                    map_center_lat       = None,
                     cogs_attribution     = 'gtsa',
                     tiler                = 'https://titiler.xyz/cog/tiles/{z}/{x}/{y}',
                     expression           = 'expression=b1&rescale=0,255',
@@ -34,6 +27,13 @@ def plot_cogs_sites(site_names,
                     fullscreen           = True,
                     print_info           = False,
                     ):
+    
+    site_names = payload['sites'].keys()
+    cog_urls_by_site = [payload['sites'][i]['cog_urls'] for i in site_names]
+    site_marker_coords = [payload['sites'][i]['marker_coords'] for i in site_names]
+    site_marker_names = [payload['sites'][i]['marker_name'] for i in site_names]
+    cog_overview_indices = [payload['sites'][i]['overview_index'] for i in site_names]
+    map_center_lat, map_center_lon = payload['map_center']
     
     if not folium_map_object:
         if not map_center_lon or not map_center_lat:
