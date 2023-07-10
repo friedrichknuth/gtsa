@@ -14,6 +14,7 @@ import zarr
 
 from dask.distributed import Client, LocalCluster
 import logging
+import webbrowser
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -106,7 +107,7 @@ def parse_earthdem_timestamps(file_list):
                 
     return [datetime.strptime(i, "%Y%m%d") for i in date_times]
     
-def dask_start_cluster(nproc, threads=1, ip_addres=None, port=':8786'):
+def dask_start_cluster(nproc, threads=1, ip_addres=None, port=':8786', open_with_browser = False):
     """
     Starts a dask cluster. Can provide a custom IP or URL to view the progress dashboard. 
     This may be necessary if working on a remote machine.
@@ -124,9 +125,14 @@ def dask_start_cluster(nproc, threads=1, ip_addres=None, port=':8786'):
         print('\n'+'Dask dashboard at:',url)
     else:
         print('\n'+'Dask dashboard at:',cluster.dashboard_link)
+        url = cluster.dashboard_link
     
     print('Workers:', nproc)
     print('Threads per worker:', threads, '\n')
+    
+    if open_with_browser:
+        webbrowser.open(url, new=0, autoraise=True)
+        
     return client
 
 
