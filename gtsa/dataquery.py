@@ -9,7 +9,7 @@ import concurrent
 import gdown
 
 def download_rgi_01_02(output_directory = '../data/rgi',
-                       region           = 'all',
+                       region           = 'both',
                        overwrite        = True,
                        verbose          = True):
     
@@ -22,21 +22,22 @@ def download_rgi_01_02(output_directory = '../data/rgi',
     
     Input
     output_directory : path : location to save data
-    region           : int  : either "1" or "2" for RGI 01 or RGI 02
+    region           : int  : either "1" or "2" for RGI 01 or RGI 02, or "both"
     
     Returns
     (path/to/01_rgi60_Alaska.geojson' , path/to/02_rgi60_WesternCanadaUS.geojson)
     '''
     print('Downloading GeoJSON files for RGI regions 01 and 02 to', output_directory)
 
-    rgi01_gdrive_id = '1fRjxyOcZYtTM95xGf6kgdnF4rDFp_lA3'
+    rgi01_gdrive_id = '18B0derwIUetJy1v5dBJaO-tTKFqqEV_u'
     rgi01_fn        = '01_rgi60_Alaska.geojson'
-    rgi02_gdrive_id = '18B0derwIUetJy1v5dBJaO-tTKFqqEV_u'
+    rgi02_gdrive_id = '1fRjxyOcZYtTM95xGf6kgdnF4rDFp_lA3'
     rgi02_fn        = '02_rgi60_WesternCanadaUS.geojson'
 
     Path(output_directory).mkdir(parents=True, exist_ok=True)
+ 
     
-    if region == 1:
+    if str(region) == '1':
         rgi01_output = Path(output_directory, rgi01_fn)
         if rgi01_output.exists() and overwrite == False:
             print(rgi01_output.resolve(), 'already exists and overwrite option set to False. Skipping download.')
@@ -45,7 +46,7 @@ def download_rgi_01_02(output_directory = '../data/rgi',
             gdown.download(id=rgi01_gdrive_id, output=str(rgi01_output), quiet=~verbose)
         return rgi01_output
     
-    elif region == 2:
+    elif str(region) == '2':
         rgi02_output = Path(output_directory, rgi02_fn)
         if rgi02_output.exists() and overwrite == False:
             print(rgi02_output.resolve(), 'already exists and overwrite option set to False. Skipping download.')
@@ -54,7 +55,7 @@ def download_rgi_01_02(output_directory = '../data/rgi',
             gdown.download(id=rgi02_gdrive_id, output=str(rgi02_output), quiet=~verbose)
         return rgi02_output
         
-    elif region == 'all':
+    elif region == 'both':
         rgi01_output = Path(output_directory, rgi01_fn)
         if rgi01_output.exists() and overwrite == False:
             print(rgi01_output.resolve(), 'already exists and overwrite option set to False. Skipping download.')
