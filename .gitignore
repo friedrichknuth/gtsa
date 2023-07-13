@@ -3,6 +3,7 @@ data/
 src/
 dev/
 dev*/
+*.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
