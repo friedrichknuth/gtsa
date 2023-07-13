@@ -8,20 +8,20 @@ from shapely.geometry import Point, Polygon
 import concurrent
 
 
-def df_xy_coords_to_gdf(df, 
-                         lon='lon',
-                         lat='lat',
-                         epsg_code='4326'):
+def df_xy_coords_to_gdf(df,
+                        lon='lon',
+                        lat='lat',
+                        crs = 'epsg:4326',
+                       ):
     """
     Function to convert pandas dataframe containing lat, lon coordinates to geopandas dataframe.
     """
     geometry = [Point(xy) for xy in zip(df[lon], df[lat])]
-    gdf = gpd.GeoDataFrame(df,geometry=geometry, crs='epsg:'+epsg_code)
+    gdf = gpd.GeoDataFrame(df,geometry=geometry, crs=crs)
     
     return gdf
 
-def bounds2polygon(xmin, xmax, ymin, ymax, 
-                    epsg_code='4326'):
+def bounds2polygon(xmin, ymin, xmax, ymax, crs):
     """
     Function to return square polygon as GeoDataFrame
     """
@@ -30,7 +30,7 @@ def bounds2polygon(xmin, xmax, ymin, ymax,
     polygon = Polygon(vertices)
     polygon_gdf = gpd.GeoDataFrame(gpd.GeoSeries(polygon), 
                                           columns=['geometry'],
-                                          crs='epsg:'+epsg_code) 
+                                          crs=crs) 
     return polygon_gdf
 
 
