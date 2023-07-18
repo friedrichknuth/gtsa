@@ -28,7 +28,7 @@ Each example is accompanied by a jupyter notebook and python script. The noteboo
 - notebooks/processing/download_dem_data.py
 - scripts/processing/download_dem_data.py
 
-#### Stack single band rasters and chunk along the time dimension for efficient regression analysis
+#### Stack single band rasters and chunk along the time dimension for efficient data retrieval
 - notebooks/processing/create_stacks.py
 - scripts/processing/create_stacks.py
 

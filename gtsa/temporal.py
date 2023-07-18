@@ -436,20 +436,20 @@ def dask_apply_linreg(DataArray, dim, kwargs=None):
         dask="parallelized",)
     return results
 
-def nmad(DataArray):
-    if np.all(np.isnan(DataArray)):
+def nmad(array):
+    if np.all(np.isnan(array)):
         return np.nan
     else:
-        return 1.4826 * np.nanmedian(np.abs(DataArray - np.nanmedian(DataArray)))
+        return 1.4826 * np.nanmedian(np.abs(array - np.nanmedian(array)))
     
-def count(DataArray):
-    return np.nansum(~np.isnan(DataArray))
+def count(array):
+    return np.nansum(~np.isnan(array))
 
-def apply_nmad(DataArray):
-    return np.apply_along_axis(nmad,0,DataArray)
+def apply_nmad(array):
+    return np.apply_along_axis(nmad,0,array)
 
-def apply_count(DataArray):
-    return np.apply_along_axis(count,0,DataArray)
+def apply_count(array):
+    return np.apply_along_axis(count,0,array)
 
 def dask_apply_func(DataArray, func):
     result = xr.apply_ufunc(

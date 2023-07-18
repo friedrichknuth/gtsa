@@ -239,6 +239,10 @@ def create_zarr_stack(xarray_dataset,
 
         if print_info:
             print('Creating temporary zarr stack')
+            
+        ds[variable_name].data = ds[variable_name].data.rechunk({0:'auto', 1:'auto', 2:'auto'}, 
+                                                    block_size_limit=1e8, 
+                                                    balance=True)
         ds.to_zarr(zarr_stack_tmp)
 
         if print_info:

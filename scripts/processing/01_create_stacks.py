@@ -6,8 +6,8 @@ import psutil
 import pandas as pd
 
 
-data_dir = '../test_data/south-cascade_1m_dems/'
-# data_dir = '../test_data/mount-baker_1m_dems/'
+data_dir = '../../data/dems/south-cascade'
+# data_dir = '../../data/dems/mount-baker'
 
 
 dems = [x.as_posix() for x in sorted(Path(data_dir).glob('*.tif'))]
@@ -29,6 +29,10 @@ ds = gtsa.io.xr_stack_geotifs(dems,
 
 ds_zarr = gtsa.io.create_zarr_stack(ds,
                                     output_directory = Path(data_dir,'stack').as_posix(),
-                                    overwrite = False)
+                                    variable_name='band1',
+                                    zarr_stack_file_name='stack.zarr',
+                                    overwrite = False,
+                                    cleanup=True,
+                                   )
     
 print('DONE')
