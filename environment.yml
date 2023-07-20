@@ -29,4 +29,5 @@ dependencies:
   - ipykernel
   - jupyter
   - nb_conda_kernels
+  - hvplot
   - pip
