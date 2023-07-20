@@ -6,7 +6,7 @@ import numpy as np
 import rasterio
 from shapely.geometry import Point, Polygon
 import concurrent
-
+import rioxarray
 
 def df_xy_coords_to_gdf(df,
                         lon='lon',
@@ -69,6 +69,34 @@ def dem_stack_bounds2polygon(tifs):
         xmin, xmax, ymin, ymax = _get_max_bounds(tifs)
         polygon_gdf = bounds2polygon(xmin, xmax, ymin, ymax, epsg_code=epsg_code)
         return polygon_gdf
+
+def extract_dataset_center_window(ds,
+                                  xdim = 'x',
+                                  ydim = 'y',
+                                  size = 1000):
+    cx, cy = _get_dataset_centroid(ds)
+    offset = size /2
+    xmin = cx - offset
+    xmax = cx + offset
+    ymin = cy - offset
+    ymax = cy + offset
+#     ds = ds.rio.clip_box(minx=xmin, miny=ymin, maxx=xmax, maxy=ymax)
+    try:
+        ds = ds.rio.clip_box(minx=xmin, miny=ymin, maxx=xmax, maxy=ymax)
+
+    except Exception as e:
+#         pass
+        if isinstance(type(e), type(rioxarray.exceptions.MissingCRS)):
+            print('No CRS defined.\nUsing xarray slicing to select data')
+            ds = ds.sel({xdim:slice(xmin, xmax), ydim:slice(ymax, ymin)})
+    
+    return ds
+
+def _get_dataset_centroid(ds):
+    xmin, ymin, xmax, ymax = ds.rio.bounds()
+    cx = (xmax - xmin)/2 + xmin
+    cy = (ymax - ymin)/2 + ymin
+    return cx, cy
 
 def _get_raster_centroid(filename):
     src = rasterio.open(filename)
