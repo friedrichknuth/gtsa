@@ -4,6 +4,7 @@ src/
 dev/
 dev*/
 *.DS_Store
+*nohup*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
