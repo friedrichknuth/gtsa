@@ -81,15 +81,8 @@ def download_historical_data(
                 verbose=verbose,
             )
 
-        print("Downloading data from https://zenodo.org/record/7297154 for", site)
-
         if not max_workers:
             max_workers = psutil.cpu_count(logical=True) - 1
-
-        if overwrite:
-            print("overwrite set to True")
-        else:
-            print("overwrite set to False")
 
         base = "https://zenodo.org/"
         url = base + "record/7297154"
@@ -120,22 +113,33 @@ def download_historical_data(
                 zipped = list(zip([urls[i], str(v)]))
                 payload.append((zipped[0][0], zipped[1][0]))
 
-        if omissions:
-            print("Skipping:")
+        if omissions and verbose:
+            print("Skipping existing files:")
             for i in omissions:
                 print(i)
+        if verbose:
+            if overwrite:
+                print("overwrite set to True")
+            else:
+                print("overwrite set to False")
 
         if payload:
-            print("Downloading:")
-            for i in payload:
-                print(i[0])
-            print("Writing to", str(output_directory))
+            if verbose:
+                print("Downloading data from https://zenodo.org/record/7297154")
+                print('Site:',site)
+                print('Using', max_workers, 'cores')
+                print("Downloading:")
+                for i in payload:
+                    print(i[0])
+                print("Writing to", str(output_directory))
 
             thread_downloads(
                 payload,
                 max_workers=max_workers,
             )
-        if not omissions and not payload:
+        if not payload and omissions and verbose:
+            print("All files already exist")
+        elif not omissions and not payload:
             print("No files available for download at", url)
 
 
@@ -174,17 +178,20 @@ def download_reference_dems(
         print("site must be specified as either 'baker' or 'south-cascade'")
         return
 
-    if overwrite:
-        print("overwrite set to True")
-    else:
-        print("overwrite set to False")
+    if verbose:
+        if overwrite:
+            print("overwrite set to True")
+        else:
+            print("overwrite set to False")
 
     if output.exists() and not overwrite:
-        print("Reference DEM file exists")
-        print(output.as_posix())
+        if verbose:
+            print("Reference DEM file exists")
+            print(output.as_posix())
 
     else:
-        print("Downloading reference dem for", site)
+        if verbose:
+            print("Downloading reference dem for", site)
         gdown.download(id=blob_id, output=output.as_posix(), quiet=not verbose)
 
     return

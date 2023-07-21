@@ -18,16 +18,10 @@ $ mamba env create -f environment.yml
 $ conda activate gtsa
 $ pip install -e .
 ```
+
 ## Examples
 
-Each example is accompanied by a jupyter notebook and python script.  
-The notebooks help illustrate the steps performed in the corresponding script.  
-
 ### Processing
-
-####  Download historical DEMs for Mount Baker and South Cascade Glacier
-- notebooks/processing/00_download_dem_data.py
-- scripts/processing/00_download_dem_data.py
 
 #### Stack single band rasters and chunk along the time dimension for efficient data retrieval
 - notebooks/processing/01_create_stacks.py
@@ -39,9 +33,6 @@ The notebooks help illustrate the steps performed in the corresponding script.
 
 ### Visualization
 
-####  Downloads historical orthoimages for Mount Baker and South Cascade Glacier
-- notebooks/visualization/00_download_ortho_data.py
-- script/visualization/00_download_ortho_data.py
 
 #### Convert single band rasters to Cloud Optimized GeoTIFFs (COGs)
 - notebooks/visualization/01_create_cogs.ipynb
@@ -51,6 +42,46 @@ The notebooks help illustrate the steps performed in the corresponding script.
 - notebooks/visualization/02_create_cog_map.ipynb
 - scripts/visualization/02_create_cog_map.py
 
+## Download sample data
+
+From the command line:
+
+```
+# South Cascade DEMs
+download_data --site south-cascade \
+              --outdir data \
+              --product dem \
+              --include_refdem \
+              --max_workers 8 \
+              --verbose \
+              --overwrite
+
+# South Cascade orthos
+download_data --site south-cascade \
+              --outdir data \
+              --product ortho \
+              --max_workers 8 \
+              --verbose \
+              --overwrite
+
+# Mount Baker DEMs
+download_data --site mount-baker \
+              --outdir data \
+              --product dem \
+              --include_refdem \
+              --max_workers 8 \
+              --verbose \
+              --overwrite
+
+# Mount Baker orthos
+download_data --site mount-baker \
+              --outdir data \
+              --product ortho \
+              --max_workers 8 \
+              --verbose \
+              --overwrite
+
+```
 ## Data citations
 
 Knuth. F. and D. Shean. (2022). Historical digital elevation models (DEMs) and orthoimage mosaics for North American Glacier Aerial Photography (NAGAP) program, version 1.0 [Data set]. Zenodo. https://doi.org/10.5281/zenodo.7297154 
