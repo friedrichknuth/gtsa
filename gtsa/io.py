@@ -56,10 +56,12 @@ def run_command(command, verbose=True):
     '''
     
     if isinstance(command, type(str())):
-        print(command)
+        if verbose:
+            print(command)
         shell = True
     else:
-        print(*command)
+        if verbose:
+            print(*command)
         shell = False
     
     p = Popen(command,

@@ -6,10 +6,19 @@ import os
 from pathlib import Path
 import re
 import shutil
+import psutil
+from tqdm import tqdm
+import concurrent
 from datetime import datetime, timedelta
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+import rioxarray
+from rasterio.enums import Resampling
+
+from dask.distributed import Client, LocalCluster, Lock
+
+import gtsa
 
 
 def decyear_to_date_time(decyear: float, leapyear=True, fannys_corr=False) -> datetime.datetime:
@@ -136,8 +145,12 @@ def resample_dem(dem_file_name,
                  overwrite=True,
                  verbose=True):
     """
-    dem_file_name : path to dem file
-    res : target resolution
+    Inputs
+    dem_file_name : str  : path to dem file
+    res           : int  : target resolution
+    out_file_name : str  : desired output file path and name
+    overwrite     : bool : Option to overwrite existing file
+    verbose       : bool : Print information
     
     Assumes crs is in UTM
     """
@@ -166,3 +179,80 @@ def resample_dem(dem_file_name,
             
     gtsa.io.run_command(call, verbose=verbose)
     return out_file_name
+
+
+def create_cogs(files,
+                output_directory = None,
+                crs = 'EPSG:4326',
+                suffix = '_COG.tif',
+                overwrite = False,
+                max_workers = None,
+                verbose = True,):
+    '''
+    Inputs
+    files            : list : Path to .tif files
+    output_directory : str  : Path to write COGs. Default is parent path of first file in files
+    crs              : str  : EPSG code. 4326 is currently required for visualization with folium and TiTiler 
+    suffix           : str  : Suffix with extension for output file names
+    overwrite        : bool : Option to overwrite existing files. If False, these will be skipped
+    max_workers      : int  : nuber of threads to use. Default is virtual cores -1
+    verbose          : bool : Print information
+    '''
+    
+    if not max_workers:
+        max_workers = psutil.cpu_count(logical=True)-1
+
+    if not output_directory:
+        output_directory = Path(Path(files[0].parent),'cogs')
+    else:
+        output_directory = Path(output_directory)
+        
+    output_directory.mkdir(parents=True, exist_ok=True)
+    
+    existing_outputs = []
+    calls = []
+    payload = []
+    
+    def to_raster(payload):
+        ds,out,crs = payload
+        ds = ds.rio.reproject(crs, 
+                              resampling=Resampling.cubic)
+        
+        ds.rio.to_raster(out,
+                         driver = 'cog',
+                         lock = True,
+                         compress='deflate', 
+                         blocksize=512, 
+                         )
+    
+    for fn in files:
+        out_fn = Path(output_directory,fn.with_suffix('').name+suffix)
+        if out_fn.exists() and not overwrite:
+            existing_outputs.append(out_fn.as_posix())
+            
+        else:
+            out_fn.unlink(missing_ok=True)
+            ds = rioxarray.open_rasterio(fn)
+            payload.append((ds,out_fn,crs))
+    
+    if existing_outputs and verbose:
+        print('The following files already exist:')
+        for i in existing_outputs:
+            print(i)
+        print('overwrite set to', overwrite)
+        
+    if payload:
+        if len(payload) > max_workers:
+            max_workers = len(payload)
+        if verbose:
+            print('Processing', len(payload), 'rasters with', max_workers , 'threads')
+        with tqdm(total=len(payload)) as pbar:
+            pool = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
+            futures = {pool.submit(to_raster, x): x for x in payload}
+            for future in concurrent.futures.as_completed(futures):
+                r = future.result()
+                pbar.update(1)
+    
+    files = sorted(output_directory.glob('*'+suffix))
+    return [x.as_posix() for x in files]
+        
