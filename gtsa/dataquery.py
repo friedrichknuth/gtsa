@@ -1,8 +1,6 @@
-import gtsa
 from bs4 import BeautifulSoup
 from pathlib import Path
 import requests
-import shutil
 import psutil
 from tqdm import tqdm
 import concurrent

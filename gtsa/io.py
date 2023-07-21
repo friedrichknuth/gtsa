@@ -4,18 +4,13 @@ from subprocess import Popen, PIPE, STDOUT
 import fsspec
 import re
 import shutil
-
-# import geoutils as gu
-import numpy as np
 import rioxarray
 import xarray as xr
 from rasterio.enums import Resampling
 import zarr
-
 from dask.distributed import Client, LocalCluster
 import logging
 import webbrowser
-
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -70,7 +65,7 @@ def run_command(command, verbose=True):
     p = Popen(command, stdout=PIPE, stderr=STDOUT, shell=shell)
 
     while p.poll() is None:
-        if verbose == True:
+        if verbose:
             try:
                 line = (p.stdout.readline()).decode("ASCII").rstrip("\n")
             except:
@@ -325,10 +320,6 @@ def determine_optimal_chuck_size(
         chunk_size_limit = 2e8
     else:
         chunk_size_limit = 1e9
-    ds_size = ds[variable_name].nbytes / 1e9
-    t = len(ds.time)
-    x = len(ds[x_dim])
-    y = len(ds[y_dim])
     arr = ds[variable_name].data.rechunk(
         {0: -1, 1: "auto", 2: "auto"}, block_size_limit=chunk_size_limit, balance=True
     )
@@ -455,18 +446,6 @@ def xr_stack_geotifs(
     ds = xr.concat(datasets, dim="time", combine_attrs="no_conflicts")
     ds = ds.sortby("time")
     return ds
-
-
-def dask_get_mapped_tasks(dask_array):
-    """
-    Finds tasks associated with chunked dask array.
-    """
-    # TODO There has to be a better way to do this...
-    txt = dask_array._repr_html_()
-    idx = txt.find("Tasks")
-    strings = txt[idx - 20 : idx].split(" ")
-    tasks_count = max([int(i) for i in strings if i.isdigit()])
-    return tasks_count
 
 
 def check_xr_rio_ds_match(ds1, ds2):

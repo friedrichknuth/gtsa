@@ -2,21 +2,14 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
-import re
-import shutil
 import psutil
 from tqdm import tqdm
 import concurrent
 from datetime import datetime, timedelta
-import geopandas as gpd
 import numpy as np
-import pandas as pd
 import rioxarray
 from rasterio.enums import Resampling
-
-from dask.distributed import Client, LocalCluster, Lock
 
 import gtsa
 
@@ -65,82 +58,6 @@ def date_time_to_decyear(date_time: float, leapyear=True) -> float:
     decyear = date_time.year + ddate.total_seconds() / (ndays * 24 * 3600)
 
     return decyear
-
-
-def OGGM_get_centerline(rgi_id, crs=None, return_longest_segment=False):
-    from oggm import cfg, graphics, utils, workflow
-
-    cfg.initialize(logging_level="CRITICAL")
-    rgi_ids = [rgi_id]
-
-    cfg.PATHS["working_dir"] = utils.gettempdir(dirname="OGGM-centerlines", reset=True)
-
-    # We start from prepro level 3 with all data ready - note the url here
-    base_url = "https://cluster.klima.uni-bremen.de/~oggm/gdirs/oggm_v1.4/L3-L5_files/CRU/centerlines/qc3/pcp2.5/no_match/"
-    gdirs = workflow.init_glacier_directories(
-        rgi_ids, from_prepro_level=3, prepro_border=40, prepro_base_url=base_url
-    )
-    gdir_cl = gdirs[0]
-    center_lines = gdir_cl.read_pickle("centerlines")
-
-    p = Path("./rgi_tmp/")
-    p.mkdir(parents=True, exist_ok=True)
-    utils.write_centerlines_to_shape(gdir_cl, path="./rgi_tmp/tmp.shp")
-    gdf = gpd.read_file("./rgi_tmp/tmp.shp")
-
-    shutil.rmtree("./rgi_tmp/")
-
-    if crs:
-        gdf = gdf.to_crs(crs)
-
-    if return_longest_segment:
-        gdf[gdf["LE_SEGMENT"] == gdf["LE_SEGMENT"].max()]
-    return gdf
-
-
-def get_largest_glacier_from_shapefile(shapefile, crs=None, get_longest_segment=False):
-    gdf = gpd.read_file(shapefile)
-    gdf = gdf[gdf["Area"] == gdf["Area"].max()]
-    if crs:
-        gdf = gdf.to_crs(crs)
-
-    return gdf
-
-
-def extract_linestring_coords(linestring):
-    """
-    Function to extract x, y coordinates from linestring object
-    Input:
-    shapely.geometry.linestring.LineString
-    Returns:
-    [x: np.array,y: np.array]
-    """
-    x = []
-    y = []
-    for coords in linestring.coords:
-        x.append(coords[0])
-        y.append(coords[1])
-    return [np.array(x), np.array(y)]
-
-
-def xr_extract_ma_arrays_at_coords(da, x_coords, y_coords):
-    ma_arrays = []
-    for i, v in enumerate(x_coords):
-        sub = da.sel(
-            x=x_coords[i], y=y_coords[i], method="nearest"
-        )  # handles point coords with greater precision than da coords
-        ma_arrays.append(np.ma.masked_invalid(sub.values))
-    ma_stack = np.ma.stack(ma_arrays, axis=1)
-    return ma_stack
-
-
-def find_step_in_array(arr):
-    step = []
-    for i, v in enumerate(arr):
-        if i < len(arr) - 1:
-            step.append(arr[i + 1] - arr[i])
-
-    return list(set(step))
 
 
 def resample_dem(
@@ -225,7 +142,6 @@ def create_cogs(
     output_directory.mkdir(parents=True, exist_ok=True)
 
     existing_outputs = []
-    calls = []
     payload = []
 
     def to_raster(payload):
@@ -265,7 +181,6 @@ def create_cogs(
             pool = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
             futures = {pool.submit(to_raster, x): x for x in payload}
             for future in concurrent.futures.as_completed(futures):
-                r = future.result()
                 pbar.update(1)
 
     files = sorted(output_directory.glob("*" + suffix))

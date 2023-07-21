@@ -1,41 +1,14 @@
-import multiprocessing as mp
-
-import matplotlib
 import numpy as np
 import numbers
 import pandas as pd
-import psutil
-from sklearn import linear_model
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import (
-    RBF,
-    ConstantKernel,
-    ExpSineSquared,
-    PairwiseKernel,
-    RationalQuadratic,
-    WhiteKernel,
-    Matern,
-)
-from scipy.optimize import curve_fit
-from scipy.interpolate import interp1d
-import statsmodels.api as sm
-from tqdm import tqdm
-
 import xarray as xr
-import dask
-
 from gtsa import utils
-
-from sklearn.utils import all_estimators
-import inspect
 
 
 def create_prediction_timeseries(
     start_date="2000-01-01", end_date="2023-01-01", dt="M"
 ):
-    # M  = monthly frequency
-    # 3M = every 3 months
-    # 6M = every 6 months
     d = pd.date_range(start_date, end_date, freq=dt)
     X = d.to_series().apply([utils.date_time_to_decyear]).values.squeeze()
     return X

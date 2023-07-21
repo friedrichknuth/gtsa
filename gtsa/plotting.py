@@ -1,12 +1,4 @@
-import geopandas as gpd
-import matplotlib
 import numpy as np
-from IPython.display import HTML
-from matplotlib import animation
-from matplotlib import pyplot as plt
-from matplotlib.lines import Line2D
-from matplotlib.patches import Patch
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 import folium
 from folium import plugins
 

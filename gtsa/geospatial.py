@@ -1,10 +1,6 @@
 import geopandas as gpd
-
-# import haversine
-# import math
 import numpy as np
-
-# import pyproj
+import math
 import rasterio
 from shapely.geometry import Point, Polygon
 import concurrent
