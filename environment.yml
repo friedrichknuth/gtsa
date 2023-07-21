@@ -1,10 +1,7 @@
 name: gtsa
 channels:
   - conda-forge
-  - oggm
 dependencies:
-  - oggm
-  - oggm-deps
   - awscli
   - s3fs
   - fsspec
@@ -13,8 +10,6 @@ dependencies:
   - numpy
   - scipy
   - matplotlib
-  - contextily
-  - statsmodels
   - pandas
   - geopandas
   - xarray
