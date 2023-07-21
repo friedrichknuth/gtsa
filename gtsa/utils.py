@@ -3,14 +3,11 @@
 from __future__ import annotations
 
 import os
-import pathlib
+from pathlib import Path
 import re
 import shutil
 from datetime import datetime, timedelta
-
 import geopandas as gpd
-# import geoutils as gu
-# import xdem
 import numpy as np
 import pandas as pd
 
@@ -74,7 +71,7 @@ def OGGM_get_centerline(rgi_id, crs=None, return_longest_segment=False):
     gdir_cl = gdirs[0]
     center_lines = gdir_cl.read_pickle("centerlines")
 
-    p = pathlib.Path("./rgi_tmp/")
+    p = Path("./rgi_tmp/")
     p.mkdir(parents=True, exist_ok=True)
     utils.write_centerlines_to_shape(gdir_cl, path="./rgi_tmp/tmp.shp")
     gdf = gpd.read_file("./rgi_tmp/tmp.shp")
@@ -132,3 +129,40 @@ def find_step_in_array(arr):
             step.append(arr[i+1] - arr[i])
     
     return(list(set(step)))
+
+def resample_dem(dem_file_name, 
+                 res=1,
+                 out_file_name=None,
+                 overwrite=True,
+                 verbose=True):
+    """
+    dem_file_name : path to dem file
+    res : target resolution
+    
+    Assumes crs is in UTM
+    """
+    res = str(res)
+    
+    if not out_file_name:
+        out_file_name = '_'.join([str(Path(dem_file_name).with_suffix("")),res+'m.tif'])
+    
+    Path(out_file_name).parent.mkdir(parents=True, exist_ok=True)
+    
+    if Path(out_file_name).exists() and not overwrite:
+        return out_file_name
+    
+    if overwrite:
+        Path(out_file_name).unlink(missing_ok=True)
+        
+    call = ['gdalwarp',
+            '-r','cubic',
+            '-tr', res, res,
+            '-co','TILED=YES',
+            '-co','COMPRESS=LZW',
+            '-co','BIGTIFF=IF_SAFER',
+            '-dstnodata', '-9999',
+            dem_file_name,
+            out_file_name]
+            
+    gtsa.io.run_command(call, verbose=verbose)
+    return out_file_name
