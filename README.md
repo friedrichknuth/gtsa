@@ -20,35 +20,36 @@ $ pip install -e .
 ```
 ## Examples
 
-Each example is accompanied by a jupyter notebook and python script. The notebooks help illustrate the steps performed in the corresponding script.  
+Each example is accompanied by a jupyter notebook and python script.  
+The notebooks help illustrate the steps performed in the corresponding script.  
 
 ### Processing
 
 ####  Download historical DEMs for Mount Baker and South Cascade Glacier
-- notebooks/processing/download_dem_data.py
-- scripts/processing/download_dem_data.py
+- notebooks/processing/00_download_dem_data.py
+- scripts/processing/00_download_dem_data.py
 
 #### Stack single band rasters and chunk along the time dimension for efficient data retrieval
-- notebooks/processing/create_stacks.py
-- scripts/processing/create_stacks.py
+- notebooks/processing/01_create_stacks.py
+- scripts/processing/01_create_stacks.py
 
 #### Run memory-efficient time series analysis methods using dask
-- notebooks/processing/fit_regression_to_stack.ipynb
-- scripts/processing/run_regression.py
+- notebooks/processing/02_time_series_computations.ipynb
+- scripts/processing/02_time_series_computations.py
 
 ### Visualization
 
 ####  Downloads historical orthoimages for Mount Baker and South Cascade Glacier
-- notebooks/visualization/download_ortho_data.py
-- script/visualization/download_ortho_data.py
+- notebooks/visualization/00_download_ortho_data.py
+- script/visualization/00_download_ortho_data.py
 
-#### Convert single band rasters to Cloud Optimized GeoTIFFs (COGs) and send to remote public storage (AWS S3)
-- notebooks/visualization/create_cogs.ipynb
-- scripts/visualization/create_cogs.py
+#### Convert single band rasters to Cloud Optimized GeoTIFFs (COGs)
+- notebooks/visualization/01_create_cogs.ipynb
+- scripts/visualization/01_create_cogs.py
 
 #### Create interactive folium map for efficient visualization
-- notebooks/visualization/make_cog_map.ipynb
-- scripts/visualization/make_cog_map.py
+- notebooks/visualization/02_create_cog_map.ipynb
+- scripts/visualization/02_create_cog_map.py
 
 ## Data citations
 
