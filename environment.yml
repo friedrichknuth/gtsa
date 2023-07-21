@@ -30,4 +30,5 @@ dependencies:
   - jupyter
   - nb_conda_kernels
   - hvplot
+  - black
   - pip
