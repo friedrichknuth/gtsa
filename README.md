@@ -1,5 +1,5 @@
 # Geospatial Time Series Analysis
-Methods to compute continuous per-pixel raster change from temporally and spatially sparse measurements.
+Methods to stack geospatial rasters and make memory-efficient computations along the time axis. 
 
 ## Installation
 

@@ -8,25 +8,37 @@ from tqdm import tqdm
 import concurrent
 import gdown
 
-def download_data(output_directory,
-                  payload):
+def download_data(payload):
+    '''
+    Executes request for url and output file name contained in paylod.
+    
+    Input
+    payload : tuple : tuple of url, filename
+    '''
+    
     url, out = payload
     r = requests.get(url)
     open(out, 'wb').write(r.content)
     return out
         
-def thread_downloads(output_directory, 
-                     payload,
+def thread_downloads(payload,
                      max_workers= None):
+    
+    '''
+    Executes multithreaded requests for urls and output file names contained in payload.
+    
+    Inputs
+    payload          : list : list of url, filename tuples
+    max_workers      : int  : number of threads to execture concurrent requests with. defaults to virtually available cores -1
+    
+    '''
     
     if not max_workers:
         max_workers = psutil.cpu_count(logical=True)-1
     
     with tqdm(total=len(payload)) as pbar:
         pool = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
-        future_to_url = {pool.submit(download_data,
-                                     output_directory,
-                                     x): x for x in payload}
+        future_to_url = {pool.submit(download_data, x): x for x in payload}
         for future in concurrent.futures.as_completed(future_to_url):
             pbar.update(1)
             
@@ -106,9 +118,9 @@ def download_historical_data(site = 'mount-baker',
     '''
     Downloads 1m DEMs from https://zenodo.org/record/7297154
     
-    input options:
-    site : 'mount-baker' or 'south-cascade'
-    product : 'dem' or 'ortho'
+    Inputs
+    site    : str : 'mount-baker' or 'south-cascade'
+    product : str : 'dem' or 'ortho'
     '''
         
     if site != 'mount-baker' and site != 'south-cascade':
@@ -183,8 +195,7 @@ def download_historical_data(site = 'mount-baker',
                 print(i[0])
             print('Writing to', str(output_directory))
 
-            thread_downloads(output_directory, 
-                             payload,
+            thread_downloads(payload,
                              max_workers=max_workers,
                             )
         if not omissions and not payload:
