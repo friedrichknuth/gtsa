@@ -126,8 +126,8 @@ def download_historical_data(
         if payload:
             if verbose:
                 print("Downloading data from https://zenodo.org/record/7297154")
-                print('Site:',site)
-                print('Using', max_workers, 'cores')
+                print("Site:", site)
+                print("Using", max_workers, "cores")
                 print("Downloading:")
                 for i in payload:
                     print(i[0])
