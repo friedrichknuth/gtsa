@@ -6,43 +6,53 @@ import gtsa
     help="Downloads historical orthoimage and digital elevation model data from https://doi.org/10.5281/zenodo.7297154"
 )
 @click.option(
+    "-s",
     "--site",
     prompt=True,
     default="south-cascade",
     help="Use 'mount-baker' or 'south-cascade' (without quotes).",
 )
 @click.option(
+    "-od",
     "--outdir",
     prompt=True,
     default="data",
     help="Your desired output directory path.",
 )
 @click.option(
+    "-pr",
     "--product",
     prompt=True,
     default="dem",
     help="Use 'dem' or 'ortho' (without quotes).",
 )
 @click.option(
+    "-ref",
     "--include_refdem",
     is_flag=True,
     default=False,
     help="Set to download reference DEM for site.",
 )
 @click.option(
-    "--max_workers", default=None, help="Set to integer matching cores to be used."
+    "-mw",
+    "--max_workers",
+    default=None,
+    type=int,
+    help="Number of workers (cores) to be used.",
 )
 @click.option(
-    "--silent",
-    is_flag=True,
-    default=True,
-    help="Set to silence information printed to stdout.",
-)
-@click.option(
+    "-ow",
     "--overwrite",
     is_flag=True,
     default=False,
     help="Set to overwrite existing outputs.",
+)
+@click.option(
+    "-si",
+    "--silent",
+    is_flag=True,
+    default=True,
+    help="Set to silence information printed to stdout.",
 )
 def main(
     site,
@@ -50,8 +60,8 @@ def main(
     product,
     include_refdem,
     max_workers,
-    silent,
     overwrite,
+    silent,
 ):
     gtsa.dataquery.download_historical_data(
         site=site,

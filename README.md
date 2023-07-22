@@ -20,6 +20,8 @@ $ pip install -e .
 ```
 
 ## Examples
+Below are various command line utilities and corresponding Jupyter notebooks with Python examples.  
+See `--help` flag for more information about each command.
 
 ### Processing
 
@@ -35,8 +37,13 @@ $ pip install -e .
 
 
 #### Convert single band rasters to Cloud Optimized GeoTIFFs (COGs)
-- notebooks/visualization/01_create_cogs.ipynb
-- scripts/visualization/01_create_cogs.py
+
+```
+create_cogs -datadir data \
+            -outdir data/cogs
+```
+
+Python examples in `notebooks/visualization/01_create_cogs.ipynb`
 
 #### Create interactive folium map for efficient visualization
 - notebooks/visualization/02_create_cog_map.ipynb
@@ -44,10 +51,26 @@ $ pip install -e .
 
 ## Download sample data
 
-From the command line:
+```
+download_data --help
+
+  Downloads historical orthoimage and digital elevation model data from
+  https://doi.org/10.5281/zenodo.7297154
+
+Options:
+  --site TEXT            Use 'mount-baker' or 'south-cascade' (without quotes).
+  --outdir TEXT          Your desired output directory path.
+  --product TEXT         Use 'dem' or 'ortho' (without quotes).
+  --include_refdem       Set to download reference DEM for site.
+  --max_workers INTEGER  Number of workers (cores) to be used.
+  --overwrite            Set to overwrite existing outputs.
+  --silent               Set to silence information printed to stdout.
+  --help                 Show this message and exit.
+```
+
+Example
 
 ```
-# South Cascade DEMs
 download_data --site south-cascade \
               --outdir data \
               --product dem \
@@ -55,33 +78,8 @@ download_data --site south-cascade \
               --max_workers 8 \
               --verbose \
               --overwrite
-
-# South Cascade orthos
-download_data --site south-cascade \
-              --outdir data \
-              --product ortho \
-              --max_workers 8 \
-              --verbose \
-              --overwrite
-
-# Mount Baker DEMs
-download_data --site mount-baker \
-              --outdir data \
-              --product dem \
-              --include_refdem \
-              --max_workers 8 \
-              --verbose \
-              --overwrite
-
-# Mount Baker orthos
-download_data --site mount-baker \
-              --outdir data \
-              --product ortho \
-              --max_workers 8 \
-              --verbose \
-              --overwrite
-
 ```
+
 ## Data citations
 
 Knuth. F. and D. Shean. (2022). Historical digital elevation models (DEMs) and orthoimage mosaics for North American Glacier Aerial Photography (NAGAP) program, version 1.0 [Data set]. Zenodo. https://doi.org/10.5281/zenodo.7297154 

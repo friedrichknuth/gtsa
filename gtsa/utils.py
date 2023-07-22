@@ -134,6 +134,10 @@ def create_cogs(
     if not max_workers:
         max_workers = psutil.cpu_count(logical=True) - 1
 
+    if len(files) < max_workers:
+        print("Reducing max_workers to one per input file")
+        max_workers = len(payload)
+
     if not output_directory:
         output_directory = Path(Path(files[0].parent), "cogs")
     else:
@@ -173,10 +177,8 @@ def create_cogs(
         print("overwrite set to", overwrite)
 
     if payload:
-        if len(payload) > max_workers:
-            max_workers = len(payload)
         if verbose:
-            print("Processing", len(payload), "rasters with", max_workers, "threads")
+            print("Processing", len(payload), "rasters with", max_workers, "workers")
         with tqdm(total=len(payload)) as pbar:
             pool = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
             futures = {pool.submit(to_raster, x): x for x in payload}
