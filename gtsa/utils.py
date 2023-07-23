@@ -117,7 +117,7 @@ def create_cogs(
     crs="EPSG:4326",
     suffix="_COG.tif",
     overwrite=False,
-    max_workers=None,
+    workers=None,
     verbose=True,
 ):
     """
@@ -127,16 +127,16 @@ def create_cogs(
     crs              : str  : EPSG code. 4326 is currently required for visualization with folium and TiTiler
     suffix           : str  : Suffix with extension for output file names
     overwrite        : bool : Option to overwrite existing files. If False, these will be skipped
-    max_workers      : int  : nuber of threads to use. Default is virtual cores -1
+    workers      : int  : nuber of threads to use. Default is virtual cores -1
     verbose          : bool : Print information
     """
 
-    if not max_workers:
-        max_workers = psutil.cpu_count(logical=True) - 1
+    if not workers:
+        workers = psutil.cpu_count(logical=True) - 1
 
-    if len(files) < max_workers:
-        print("Reducing max_workers to one per input file")
-        max_workers = len(payload)
+    if len(files) < workers:
+        print("Reducing workers to one per input file")
+        workers = len(payload)
 
     if not output_directory:
         output_directory = Path(Path(files[0].parent), "cogs")
@@ -178,9 +178,9 @@ def create_cogs(
 
     if payload:
         if verbose:
-            print("Processing", len(payload), "rasters with", max_workers, "workers")
+            print("Processing", len(payload), "rasters with", workers, "workers")
         with tqdm(total=len(payload)) as pbar:
-            pool = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
+            pool = concurrent.futures.ThreadPoolExecutor(workers=workers)
             futures = {pool.submit(to_raster, x): x for x in payload}
             for future in concurrent.futures.as_completed(futures):
                 pbar.update(1)

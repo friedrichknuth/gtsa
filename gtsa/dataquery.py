@@ -21,21 +21,21 @@ def download_data(payload):
     return out
 
 
-def thread_downloads(payload, max_workers=None):
+def thread_downloads(payload, workers=None):
     """
     Executes multithreaded requests for urls and output file names contained in payload.
 
     Inputs
     payload          : list : list of url, filename tuples
-    max_workers      : int  : number of threads to execture concurrent requests with. defaults to virtually available cores -1
+    workers      : int  : number of threads to execture concurrent requests with. defaults to virtually available cores -1
 
     """
 
-    if not max_workers:
-        max_workers = psutil.cpu_count(logical=True) - 1
+    if not workers:
+        workers = psutil.cpu_count(logical=True) - 1
 
     with tqdm(total=len(payload)) as pbar:
-        pool = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
+        pool = concurrent.futures.ThreadPoolExecutor(max_workers=workers)
         future_to_url = {pool.submit(download_data, x): x for x in payload}
         for future in concurrent.futures.as_completed(future_to_url):
             pbar.update(1)
@@ -47,7 +47,7 @@ def download_historical_data(
     output_directory="data",
     include_refdem=False,
     overwrite=False,
-    max_workers=None,
+    workers=None,
     verbose=True,
 ):
     """
@@ -81,8 +81,8 @@ def download_historical_data(
                 verbose=verbose,
             )
 
-        if not max_workers:
-            max_workers = psutil.cpu_count(logical=True) - 1
+        if not workers:
+            workers = psutil.cpu_count(logical=True) - 1
 
         base = "https://zenodo.org/"
         url = base + "record/7297154"
@@ -127,7 +127,7 @@ def download_historical_data(
             if verbose:
                 print("Downloading data from https://zenodo.org/record/7297154")
                 print("Site:", site)
-                print("Using", max_workers, "cores")
+                print("Using", workers, "cores")
                 print("Downloading:")
                 for i in payload:
                     print(i[0])
@@ -135,7 +135,7 @@ def download_historical_data(
 
             thread_downloads(
                 payload,
-                max_workers=max_workers,
+                workers=workers,
             )
         if not payload and omissions and verbose:
             print("All files already exist")

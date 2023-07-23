@@ -22,7 +22,7 @@ import gtsa
 )
 @click.option(
     "-mw",
-    "--max_workers",
+    "--workers",
     default=None,
     help="Set to integer matching cores to be used.",
 )
@@ -43,7 +43,7 @@ import gtsa
 def main(
     datadir,
     outdir,
-    max_workers,
+    workers,
     silent,
     overwrite,
 ):
@@ -54,7 +54,7 @@ def main(
         output_directory=outdir,
         crs="EPSG:4326",  # currently required for visualization with folium and titiler
         overwrite=overwrite,
-        max_workers=max_workers,
+        workers=workers,
         verbose=silent,
     )
     print("DONE")

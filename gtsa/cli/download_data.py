@@ -35,7 +35,7 @@ import gtsa
 )
 @click.option(
     "-mw",
-    "--max_workers",
+    "--workers",
     default=None,
     type=int,
     help="Number of workers (cores) to be used.",
@@ -59,21 +59,23 @@ def main(
     outdir,
     product,
     include_refdem,
-    max_workers,
+    workers,
     overwrite,
     silent,
 ):
+    verbose = not silent
     gtsa.dataquery.download_historical_data(
         site=site,
         product=product,
         output_directory=outdir,
         include_refdem=include_refdem,
         overwrite=overwrite,
-        max_workers=max_workers,
-        verbose=silent,
+        workers=workers,
+        verbose=verbose,
     )
 
-    print("DONE")
+    if verbose:
+        print("DONE")
 
 
 if __name__ == "__main__":

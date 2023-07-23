@@ -109,14 +109,14 @@ def parse_earthdem_timestamps(file_list):
 
 
 def dask_start_cluster(
-    nproc, threads=1, ip_addres=None, port=":8786", open_with_browser=False
+    workers, threads=1, ip_address=None, port=":8786", open_browser=False, verbose=True,
 ):
     """
     Starts a dask cluster. Can provide a custom IP or URL to view the progress dashboard.
     This may be necessary if working on a remote machine.
     """
     cluster = LocalCluster(
-        n_workers=nproc,
+        n_workers=workers,
         threads_per_worker=threads,
         silence_logs=logging.ERROR,
         dashboard_address=port,
@@ -124,18 +124,27 @@ def dask_start_cluster(
 
     client = Client(cluster)
 
-    if ip_addres:
+    if ip_address:
+        if ip_address[-1] == '/':
+            ip_address = ip_address[:-1] # remove trailing '/' in case it exists
         port = str(cluster.dashboard_link.split(":")[-1])
-        url = ":".join([ip_addres, port])
-        print("\n" + "Dask dashboard at:", url)
+        url = ":".join([ip_address, port])
+        if verbose:
+            print("\n" + "Dask dashboard at:", url)
     else:
-        print("\n" + "Dask dashboard at:", cluster.dashboard_link)
+        if verbose:
+            print("\n" + "Dask dashboard at:", cluster.dashboard_link)
         url = cluster.dashboard_link
 
-    print("Workers:", nproc)
-    print("Threads per worker:", threads, "\n")
+    if port not in url:
+        if verbose:
+            print('Port', port, 'already occupied')
+    
+    if verbose:
+        print("Workers:", workers)
+        print("Threads per worker:", threads, "\n")
 
-    if open_with_browser:
+    if open_browser:
         webbrowser.open(url, new=0, autoraise=True)
 
     return client
@@ -198,7 +207,7 @@ def create_zarr_stack(
     variable_name="band1",
     zarr_stack_file_name="stack.zarr",
     overwrite=False,
-    print_info=True,
+    verbose=True,
     cleanup=False,
 ):
     # TODO - writing to zarr with ds.rio.crs assigned fails - not sure how to preserve the crs in the saved file
@@ -213,11 +222,16 @@ def create_zarr_stack(
     if overwrite:
         shutil.rmtree(zarr_stack_fn, ignore_errors=True)
         shutil.rmtree(zarr_stack_tmp, ignore_errors=True)
-    elif zarr_stack_fn.exists():
+    if zarr_stack_fn.exists():
+        if cleanup:
+            if verbose:
+                print("Removing temporary zarr stack")
+            shutil.rmtree(zarr_stack_tmp, ignore_errors=True)
+
         ds = xr.open_dataset(zarr_stack_fn, chunks="auto", engine="zarr")
-        if print_info:
-            print("\nZarr file exists")
-            print("\nZarr file info")
+        if verbose:
+            print("Zarr file already exists")
+            print("Zarr file info")
             source_group = zarr.open(zarr_stack_fn)
             source_array = source_group[variable_name]
             print(source_group.tree())
@@ -225,13 +239,15 @@ def create_zarr_stack(
             del source_group
             del source_array
 
-        tc, yc, xc = determine_optimal_chuck_size(ds, print_info=print_info)
+        tc, yc, xc = determine_optimal_chuck_size(ds, verbose=verbose)
         ds = xr.open_dataset(
             zarr_stack_fn, chunks={"time": tc, "y": yc, "x": xc}, engine="zarr"
         )
         return ds
 
     else:
+        if zarr_stack_tmp.exists():
+            shutil.rmtree(zarr_stack_tmp, ignore_errors=True)
         # remove attributes that zarr doesn't like
         try:
             ds = ds.drop(["spatial_ref"])
@@ -243,15 +259,18 @@ def create_zarr_stack(
         except:
             pass
 
-        if print_info:
+        if verbose:
             print("Creating temporary zarr stack")
 
         ds[variable_name].data = ds[variable_name].data.rechunk(
             {0: "auto", 1: "auto", 2: "auto"}, block_size_limit=1e8, balance=True
         )
+        arr = ds[variable_name].data
+        t, y, x = arr.chunks[0][0], arr.chunks[1][0], arr.chunks[2][0]
+        ds[variable_name].encoding = {"chunks": (t, y, x)}
         ds.to_zarr(zarr_stack_tmp)
 
-        if print_info:
+        if verbose:
             source_group = zarr.open(zarr_stack_tmp)
             source_array = source_group[variable_name]
             print(source_group.tree())
@@ -259,7 +278,7 @@ def create_zarr_stack(
             del source_group
             del source_array
 
-        if print_info:
+        if verbose:
             print("Rechunking temporary zarr stack and saving as")
             print(str(zarr_stack_fn))
 
@@ -273,8 +292,8 @@ def create_zarr_stack(
         ds[variable_name].encoding = {"chunks": (t, y, x)}
         ds.to_zarr(zarr_stack_fn)
 
-        if print_info:
-            print("\nRechunked zarr file info")
+        if verbose:
+            print("Rechunked zarr file info")
             source_group = zarr.open(zarr_stack_fn)
             source_array = source_group[variable_name]
             print(source_group.tree())
@@ -282,11 +301,11 @@ def create_zarr_stack(
             del source_group
             del source_array
         if cleanup:
-            if print_info:
+            if verbose:
                 print("Removing temporary zarr stack")
             shutil.rmtree(zarr_stack_tmp, ignore_errors=True)
 
-        tc, yc, xc = determine_optimal_chuck_size(ds, print_info=print_info)
+        tc, yc, xc = determine_optimal_chuck_size(ds, verbose=verbose)
         ds = xr.open_dataset(
             zarr_stack_fn, chunks={"time": tc, "y": yc, "x": xc}, engine="zarr"
         )
@@ -295,10 +314,10 @@ def create_zarr_stack(
 
 
 def determine_optimal_chuck_size(
-    ds, variable_name="band1", x_dim="x", y_dim="y", print_info=True
+    ds, variable_name="band1", x_dim="x", y_dim="y", verbose=True
 ):
-    if print_info:
-        print("\nDetermining optimal chunk size for processing")
+    if verbose:
+        print("Dask chunk size:")
     ## set chunk size to 1 MB if single time series array < 1 MB in size
     ## else increase to max of 1 GB chunk sizes.
 
@@ -325,12 +344,12 @@ def determine_optimal_chuck_size(
     )
     tc, yc, xc = arr.chunks[0][0], arr.chunks[1][0], arr.chunks[2][0]
     chunksize = ds[variable_name][:tc, :yc, :xc].nbytes / 1e6
-    if print_info:
+    if verbose:
         print("Chunk shape:", "(" + ",".join([str(x) for x in [tc, yc, xc]]) + ")")
         print(
             "Chunk size:",
             ds[variable_name][:tc, :yc, :xc].nbytes,
-            "(" + str(chunksize) + " G)",
+            "(" + str(round(chunksize,1)) + "M)",
         )
 
     return tc, yc, xc
@@ -345,6 +364,7 @@ def xr_stack_geotifs(
     nc_out_dir=None,
     overwrite=True,
     cleanup=False,
+    verbose=True,
 ):
     """
     Stack single or multi-band GeoTiFFs to reference_geotiff.
@@ -388,6 +408,7 @@ def xr_stack_geotifs(
 
     ## Get target object with desired crs, res, bounds, transform
     ## TODO: Parameterize crs, res, bounds, transform
+    ## TODO: rewrite with dask delayed https://tutorial.dask.org/03_dask.delayed.html
     ref = xr_read_geotif(reference_geotif_file)
 
     ## Stack geotifs and dimension in time
@@ -426,23 +447,24 @@ def xr_stack_geotifs(
 
     # check if anything was resampled
     if c != 0:
-        print(
-            "Resampled",
-            c,
-            "of",
-            len(geotif_files_list),
-            "dems to match reference DEM spatial_ref, crs, transform, bounds, and resolution.",
-        )
+        if verbose:
+            print(
+                "Resampled",
+                c,
+                "of",
+                len(geotif_files_list),
+                "dems to match reference DEM spatial_ref, crs, transform, bounds, and resolution.",
+            )
 
     # Optionally ensure data are returned as dask array.
     if save_to_nc:
-        print("Saved .nc files in", ",".join([str(i) for i in list(set(out_dirs))]))
-        ds = xr.open_mfdataset(nc_files)
+        if verbose:
+            print("Reading files from", ",".join([str(i) for i in list(set(out_dirs))]))
+        ds = xr.open_mfdataset(nc_files, chunks='auto')
         ds = ds.sortby("time")
         ds.rio.write_crs(ref.rio.crs, inplace=True)
         return ds
 
-    print("here")
     ds = xr.concat(datasets, dim="time", combine_attrs="no_conflicts")
     ds = ds.sortby("time")
     return ds
