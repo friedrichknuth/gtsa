@@ -11,7 +11,7 @@ setup(
     entry_points={
         "console_scripts": [
             "download_data=gtsa.cli.download_data:main",
-            "create_stacks=gtsa.cli.create_stacks:main",
+            "create_stack=gtsa.cli.create_stack:main",
             "create_cogs=gtsa.cli.create_cogs:main",
             "create_cog_map=gtsa.cli.create_cog_map:main",
             "time_series_computations=gtsa.cli.time_series_computations:main",
