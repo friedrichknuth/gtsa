@@ -20,14 +20,18 @@ $ pip install -e .
 ```
 
 ## Examples
-Below are various command line utilities and corresponding Jupyter notebooks with Python examples.  
-See `--help` flag for more information about each command.
 
 ### Processing
 
 #### Stack single band rasters and chunk along the time dimension for efficient data retrieval
-- notebooks/processing/01_create_stacks.py
-- scripts/processing/01_create_stacks.py
+From command line
+```
+create_stack --help
+```
+Python examples in 
+```
+notebooks/processing/01_create_stacks.ipynb`
+```
 
 #### Run memory-efficient time series analysis methods using dask
 - notebooks/processing/02_time_series_computations.ipynb
@@ -37,35 +41,24 @@ See `--help` flag for more information about each command.
 
 
 #### Convert single band rasters to Cloud Optimized GeoTIFFs (COGs)
-
+From command line
 ```
-create_cogs -datadir data \
-            -outdir data/cogs
+create_cogs --help
 ```
 
-Python examples in `notebooks/visualization/01_create_cogs.ipynb`
+Python examples in 
+```
+notebooks/visualization/01_create_cogs.ipynb
+```
 
 #### Create interactive folium map for efficient visualization
 - notebooks/visualization/02_create_cog_map.ipynb
 - scripts/visualization/02_create_cog_map.py
 
 ## Download sample data
-
+From command line
 ```
 download_data --help
-
-  Downloads historical orthoimage and digital elevation model data from
-  https://doi.org/10.5281/zenodo.7297154
-
-Options:
-  --site TEXT            Use 'mount-baker' or 'south-cascade' (without quotes).
-  --outdir TEXT          Your desired output directory path.
-  --product TEXT         Use 'dem' or 'ortho' (without quotes).
-  --include_refdem       Set to download reference DEM for site.
-  --max_workers INTEGER  Number of workers (cores) to be used.
-  --overwrite            Set to overwrite existing outputs.
-  --silent               Set to silence information printed to stdout.
-  --help                 Show this message and exit.
 ```
 
 Example

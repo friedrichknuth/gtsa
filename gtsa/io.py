@@ -6,6 +6,7 @@ import re
 import shutil
 import rioxarray
 import xarray as xr
+import dask
 from rasterio.enums import Resampling
 import zarr
 from dask.distributed import Client, LocalCluster
@@ -86,26 +87,6 @@ def parse_timestamps(
         except:
             print("pattern not found in", x)
     return results
-
-
-def parse_hsfm_timestamps(file_list):
-    date_times = []
-    for i in file_list:
-        parts = Path(i).name.split("_")
-        for p in parts:
-            if "-" in p:
-                date_times.append(p)
-
-    return [datetime.strptime(i, "%Y-%m-%d") for i in date_times]
-
-
-def parse_earthdem_timestamps(file_list):
-    date_times = []
-    for i in file_list:
-        parts = Path(i).name.split("_")
-        date_times.append(parts[1])
-
-    return [datetime.strptime(i, "%Y%m%d") for i in date_times]
 
 
 def dask_start_cluster(
@@ -201,6 +182,145 @@ def xr_read_geotif(geotif_file_path, chunks="auto", masked=True):
     return ds
 
 
+def xr_stack_geotifs(
+    geotif_files_list,
+    datetimes_list,
+    reference_geotif_file,
+    resampling="bilinear",
+    save_to_nc=False,
+    nc_out_dir=None,
+    overwrite=True,
+    cleanup=False,
+    verbose=True,
+):
+    """
+    Stack single or multi-band GeoTiFFs to reference_geotiff.
+    Returns out-of-memory dask array, unless resampling occurs.
+
+    Optionally, set save_to_nc true when resmapling is required to
+    return an out-of-memory dask array.
+    Inputs
+    ----------
+    geotif_files_list     : list of GeoTIFF file paths
+    datetimes_list        : list of datetime objects for each GeoTIFF
+    reference_geotif_file : GeoTIFF file path
+    Returns
+    -------
+    ds : xr.Dataset()
+    """
+    ## TODO: Parameterize crs, res, bounds, transform
+    ## TODO: rewrite with dask delayed https://tutorial.dask.org/03_dask.delayed.html
+    
+    if save_to_nc and nc_out_dir:
+        nc_out_dir = Path(nc_out_dir)
+        nc_out_dir.mkdir(parents=True, exist_ok=True)
+        
+    ## Check each geotiff has a datetime associated with it.
+    if len(datetimes_list) == len(geotif_files_list):
+        pass
+    else:
+        print("length of datetimes does not match length of GeoTIFF list")
+        print("datetimes:", len(datetimes_list))
+        print("geotifs:", len(geotif_files_list))
+        return None
+
+    ## Choose resampling method. Defaults to bilinear.
+    if isinstance(resampling, type(Resampling.bilinear)):
+        resampling = resampling
+    elif resampling == "bilinear":
+        resampling = Resampling.bilinear
+    elif resampling == "nearest":
+        resampling = Resampling.nearest
+    elif resampling == "cubic":
+        resampling = Resampling.cubic
+    else:
+        resampling = Resampling.bilinear
+
+    ## Get target object with desired crs, res, bounds, transform
+    ref = xr_read_geotif(reference_geotif_file)
+
+    ## Stack geotifs and dimension in time
+    datasets = []
+    nc_files = []
+    out_dirs = []
+
+    c = 0
+    for index, file_name in enumerate(geotif_files_list):
+        if not nc_out_dir:
+            out_fn = str(Path(file_name).with_suffix("")) + ".nc"
+        else:
+            out_fn = str(Path(nc_out_dir, Path(file_name).with_suffix("").name + ".nc"))
+
+        if Path(out_fn).exists() and not overwrite:
+            nc_files.append(out_fn)
+            out_dir = str(Path(out_fn).parents[0])
+            out_dirs.append(out_dir)
+            src = xr.open_dataset(out_fn)
+            datasets.append(src)
+
+        else:
+            Path(out_fn).unlink(missing_ok=True)
+            src = xr_read_geotif(file_name)
+            #             if not check_xr_rio_ds_match(src, ref):
+            src = src.rio.reproject_match(ref, resampling=resampling)
+            c += 1
+            src = src.assign_coords({"time": datetimes_list[index]})
+            src = src.expand_dims("time")
+            if save_to_nc:
+                src.to_netcdf(out_fn)
+                nc_files.append(out_fn)
+                out_dir = str(Path(out_fn).parents[0])
+                out_dirs.append(out_dir)
+            datasets.append(src)
+
+    # check if anything was resampled
+    if c != 0:
+        if verbose:
+            print(
+                "Resampled",
+                c,
+                "of",
+                len(geotif_files_list),
+                "dems to match reference DEM spatial_ref, crs, transform, bounds, and resolution.",
+            )
+
+    # Optionally ensure data are returned as dask array.
+    if save_to_nc:
+        if verbose:
+            print("Reading files from", ",".join([str(i) for i in list(set(out_dirs))]))
+        ds = xr.open_mfdataset(nc_files, chunks='auto')
+        ds = ds.sortby("time")
+        ds.rio.write_crs(ref.rio.crs, inplace=True)
+        return ds
+
+    ds = xr.concat(datasets, dim="time", combine_attrs="no_conflicts")
+    ds = ds.sortby("time")
+    return ds
+
+
+def check_xr_rio_ds_match(ds1, ds2):
+    """
+    Checks if spatial attributes, crs, bounds, and transform match.
+    Inputs
+    ----------
+    ds1 : xarray.Dataset with rioxarray extension
+    ds2 : xarray.Dataset with rioxarray extension
+    Returns
+    -------
+    bool
+    """
+
+    if (
+        (ds1["spatial_ref"].attrs == ds2["spatial_ref"].attrs)
+        & (ds1.rio.crs == ds2.rio.crs)
+        & (ds1.rio.transform() == ds2.rio.transform())
+        & (ds1.rio.bounds() == ds2.rio.bounds())
+        & (ds1.rio.resolution() == ds2.rio.resolution())
+    ):
+        return True
+    else:
+        return False
+        
 def create_zarr_stack(
     xarray_dataset,
     output_directory="./",
@@ -355,140 +475,4 @@ def determine_optimal_chuck_size(
     return tc, yc, xc
 
 
-def xr_stack_geotifs(
-    geotif_files_list,
-    datetimes_list,
-    reference_geotif_file,
-    resampling="bilinear",
-    save_to_nc=False,
-    nc_out_dir=None,
-    overwrite=True,
-    cleanup=False,
-    verbose=True,
-):
-    """
-    Stack single or multi-band GeoTiFFs to reference_geotiff.
-    Returns out-of-memory dask array, unless resampling occurs.
 
-    Optionally, set save_to_nc true when resmapling is required to
-    return an out-of-memory dask array.
-    Inputs
-    ----------
-    geotif_files_list     : list of GeoTIFF file paths
-    datetimes_list        : list of datetime objects for each GeoTIFF
-    reference_geotif_file : GeoTIFF file path
-    Returns
-    -------
-    ds : xr.Dataset()
-    """
-
-    if save_to_nc and nc_out_dir:
-        nc_out_dir = Path(nc_out_dir)
-        nc_out_dir.mkdir(parents=True, exist_ok=True)
-    ## Check each geotiff has a datetime associated with it.
-    if len(datetimes_list) == len(geotif_files_list):
-        pass
-    else:
-        print("length of datetimes does not match length of GeoTIFF list")
-        print("datetimes:", len(datetimes_list))
-        print("geotifs:", len(geotif_files_list))
-        return None
-
-    ## Choose resampling method. Defaults to bilinear.
-    if isinstance(resampling, type(Resampling.bilinear)):
-        resampling = resampling
-    elif resampling == "bilinear":
-        resampling = Resampling.bilinear
-    elif resampling == "nearest":
-        resampling = Resampling.nearest
-    elif resampling == "cubic":
-        resampling = Resampling.cubic
-    else:
-        resampling = Resampling.bilinear
-
-    ## Get target object with desired crs, res, bounds, transform
-    ## TODO: Parameterize crs, res, bounds, transform
-    ## TODO: rewrite with dask delayed https://tutorial.dask.org/03_dask.delayed.html
-    ref = xr_read_geotif(reference_geotif_file)
-
-    ## Stack geotifs and dimension in time
-    datasets = []
-    nc_files = []
-    out_dirs = []
-
-    c = 0
-    for index, file_name in enumerate(geotif_files_list):
-        if not nc_out_dir:
-            out_fn = str(Path(file_name).with_suffix("")) + ".nc"
-        else:
-            out_fn = str(Path(nc_out_dir, Path(file_name).with_suffix("").name + ".nc"))
-
-        if Path(out_fn).exists() and not overwrite:
-            nc_files.append(out_fn)
-            out_dir = str(Path(out_fn).parents[0])
-            out_dirs.append(out_dir)
-            src = xr.open_dataset(out_fn)
-            datasets.append(src)
-
-        else:
-            Path(out_fn).unlink(missing_ok=True)
-            src = xr_read_geotif(file_name)
-            #             if not check_xr_rio_ds_match(src, ref):
-            src = src.rio.reproject_match(ref, resampling=resampling)
-            c += 1
-            src = src.assign_coords({"time": datetimes_list[index]})
-            src = src.expand_dims("time")
-            if save_to_nc:
-                src.to_netcdf(out_fn)
-                nc_files.append(out_fn)
-                out_dir = str(Path(out_fn).parents[0])
-                out_dirs.append(out_dir)
-            datasets.append(src)
-
-    # check if anything was resampled
-    if c != 0:
-        if verbose:
-            print(
-                "Resampled",
-                c,
-                "of",
-                len(geotif_files_list),
-                "dems to match reference DEM spatial_ref, crs, transform, bounds, and resolution.",
-            )
-
-    # Optionally ensure data are returned as dask array.
-    if save_to_nc:
-        if verbose:
-            print("Reading files from", ",".join([str(i) for i in list(set(out_dirs))]))
-        ds = xr.open_mfdataset(nc_files, chunks='auto')
-        ds = ds.sortby("time")
-        ds.rio.write_crs(ref.rio.crs, inplace=True)
-        return ds
-
-    ds = xr.concat(datasets, dim="time", combine_attrs="no_conflicts")
-    ds = ds.sortby("time")
-    return ds
-
-
-def check_xr_rio_ds_match(ds1, ds2):
-    """
-    Checks if spatial attributes, crs, bounds, and transform match.
-    Inputs
-    ----------
-    ds1 : xarray.Dataset with rioxarray extension
-    ds2 : xarray.Dataset with rioxarray extension
-    Returns
-    -------
-    bool
-    """
-
-    if (
-        (ds1["spatial_ref"].attrs == ds2["spatial_ref"].attrs)
-        & (ds1.rio.crs == ds2.rio.crs)
-        & (ds1.rio.transform() == ds2.rio.transform())
-        & (ds1.rio.bounds() == ds2.rio.bounds())
-        & (ds1.rio.resolution() == ds2.rio.resolution())
-    ):
-        return True
-    else:
-        return False
