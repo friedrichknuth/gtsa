@@ -10,7 +10,7 @@ import gtsa
 @click.option(
     "-p", "--pipeline",
     prompt=True,
-    default="pipeline.json",
+    default="notebooks/visualization/pipeline.json",
     help="Path to JSON file specifying inputs.",
 )
 
