@@ -19,7 +19,7 @@ def plot_cogs_sites(
     minimap=True,
     layer_control=True,
     fullscreen=True,
-    print_info=False,
+    verbose=False,
 ):
     site_names = list(payload["sites"].keys())
     cog_urls_by_site = [payload["sites"][i]["cog_urls"] for i in site_names]
@@ -70,7 +70,7 @@ def plot_cogs_sites(
                     tiles=virtual_tiles,
                     overlay=True,
                     show=show,
-                    name=site + "_" + cog_names[j],
+                    name=cog_names[j],
                     attr=cogs_attribution,
                 ).add_to(m)
             else:
@@ -79,7 +79,7 @@ def plot_cogs_sites(
                     tiles=virtual_tiles,
                     overlay=True,
                     show=show,
-                    name=site + "_" + cog_names[j],
+                    name=cog_names[j],
                     attr=cogs_attribution,
                 ).add_to(m).add_to(cog_feature_group)
 
@@ -116,7 +116,7 @@ def plot_cogs_sites(
         )
         m.add_child(minimap)
 
-    if print_info:
+    if verbose:
         print("map center:", map_center_lon, map_center_lat)
 
     if html_file_name:
@@ -143,7 +143,7 @@ def plot_cogs(
     minimap=True,
     layer_control=True,
     fullscreen=True,
-    print_info=False,
+    verbose=False,
 ):
     if not folium_map_object:
         if not map_center_lon or not map_center_lat:
@@ -192,7 +192,7 @@ def plot_cogs(
         )
         m.add_child(minimap)
 
-    if print_info:
+    if verbose:
         print("map center:", map_center_lon, map_center_lat)
 
     if html_file_name:

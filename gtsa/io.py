@@ -363,7 +363,6 @@ def create_zarr_stack(
         ds = xr.open_dataset(
             zarr_stack_fn, chunks={"time": tc, "y": yc, "x": xc}, engine="zarr"
         )
-        return ds
 
     else:
         if zarr_stack_tmp.exists():
@@ -430,7 +429,10 @@ def create_zarr_stack(
             zarr_stack_fn, chunks={"time": tc, "y": yc, "x": xc}, engine="zarr"
         )
 
-        return ds
+    if verbose:
+        print('Zarr file at', zarr_stack_fn)
+
+    return ds
 
 
 def determine_optimal_chuck_size(
