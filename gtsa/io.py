@@ -90,7 +90,12 @@ def parse_timestamps(
 
 
 def dask_start_cluster(
-    workers, threads=1, ip_address=None, port=":8786", open_browser=False, verbose=True,
+    workers,
+    threads=1,
+    ip_address=None,
+    port=":8786",
+    open_browser=False,
+    verbose=True,
 ):
     """
     Starts a dask cluster. Can provide a custom IP or URL to view the progress dashboard.
@@ -106,8 +111,8 @@ def dask_start_cluster(
     client = Client(cluster)
 
     if ip_address:
-        if ip_address[-1] == '/':
-            ip_address = ip_address[:-1] # remove trailing '/' in case it exists
+        if ip_address[-1] == "/":
+            ip_address = ip_address[:-1]  # remove trailing '/' in case it exists
         port = str(cluster.dashboard_link.split(":")[-1])
         url = ":".join([ip_address, port])
         if verbose:
@@ -119,8 +124,8 @@ def dask_start_cluster(
 
     if port not in url:
         if verbose:
-            print('Port', port, 'already occupied')
-    
+            print("Port", port, "already occupied")
+
     if verbose:
         print("Workers:", workers)
         print("Threads per worker:", threads, "\n")
@@ -210,11 +215,11 @@ def xr_stack_geotifs(
     """
     ## TODO: Parameterize crs, res, bounds, transform
     ## TODO: rewrite with dask delayed https://tutorial.dask.org/03_dask.delayed.html
-    
+
     if save_to_nc and nc_out_dir:
         nc_out_dir = Path(nc_out_dir)
         nc_out_dir.mkdir(parents=True, exist_ok=True)
-        
+
     ## Check each geotiff has a datetime associated with it.
     if len(datetimes_list) == len(geotif_files_list):
         pass
@@ -288,7 +293,7 @@ def xr_stack_geotifs(
     if save_to_nc:
         if verbose:
             print("Reading files from", ",".join([str(i) for i in list(set(out_dirs))]))
-        ds = xr.open_mfdataset(nc_files, chunks='auto')
+        ds = xr.open_mfdataset(nc_files, chunks="auto")
         ds = ds.sortby("time")
         ds.rio.write_crs(ref.rio.crs, inplace=True)
         return ds
@@ -320,7 +325,8 @@ def check_xr_rio_ds_match(ds1, ds2):
         return True
     else:
         return False
-        
+
+
 def create_zarr_stack(
     xarray_dataset,
     output_directory="./",
@@ -430,7 +436,7 @@ def create_zarr_stack(
         )
 
     if verbose:
-        print('Zarr file at', zarr_stack_fn)
+        print("Zarr file at", zarr_stack_fn)
 
     return ds
 
@@ -471,10 +477,7 @@ def determine_optimal_chuck_size(
         print(
             "Chunk size:",
             ds[variable_name][:tc, :yc, :xc].nbytes,
-            "(" + str(round(chunksize,1)) + "M)",
+            "(" + str(round(chunksize, 1)) + "M)",
         )
 
     return tc, yc, xc
-
-
-

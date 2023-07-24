@@ -52,8 +52,15 @@ notebooks/visualization/01_create_cogs.ipynb
 ```
 
 #### Create interactive folium map for efficient visualization
-- notebooks/visualization/02_create_cog_map.ipynb
-- scripts/visualization/02_create_cog_map.py
+From command line
+```
+create_cog_map --help
+```
+
+Python examples in 
+```
+notebooks/visualization/02_create_cog_map.ipynb
+```
 
 ## Download sample data
 From command line

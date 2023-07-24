@@ -98,7 +98,6 @@ import gtsa
     default=False,
     help="Set to silence information printed to stdout.",
 )
-
 def main(
     datadir,
     outdir,
@@ -117,12 +116,13 @@ def main(
     verbose = not silent
 
     if dask_enabled:
-        client = gtsa.io.dask_start_cluster(workers,
-                                            ip_address=ip_address,
-                                            port=port,
-                                            verbose = verbose,
-                                       )
-    
+        client = gtsa.io.dask_start_cluster(
+            workers,
+            ip_address=ip_address,
+            port=port,
+            verbose=verbose,
+        )
+
     files = [x.as_posix() for x in sorted(Path(datadir).glob("*.tif"))]
 
     date_strings = [
@@ -157,14 +157,16 @@ def main(
             verbose=verbose,
             cleanup=cleanup,
         )
-    
+
         if cleanup:
             if verbose:
                 print("Removing temporary NetCDF files")
             shutil.rmtree(Path(outdir, "nc_files").as_posix(), ignore_errors=True)
-        
+
     if verbose:
         print("DONE")
+
+    return
 
 
 if __name__ == "__main__":
