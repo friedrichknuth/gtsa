@@ -1,5 +1,5 @@
 # Geospatial Time Series Analysis
-Methods to stack geospatial rasters and make memory-efficient computations along the time axis. 
+Methods to stack geospatial rasters and run memory-efficient computations. 
 
 ## Installation
 
