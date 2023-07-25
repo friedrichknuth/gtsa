@@ -14,7 +14,7 @@ setup(
             "create_stack=gtsa.cli.create_stack:main",
             "create_cogs=gtsa.cli.create_cogs:main",
             "create_cog_map=gtsa.cli.create_cog_map:main",
-            "time_series_computations=gtsa.cli.time_series_computations:main",
+            "gtsa=gtsa.cli.gtsa:main",
         ]
     },
 )

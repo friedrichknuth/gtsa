@@ -15,7 +15,7 @@ import gtsa
 
 
 def decyear_to_date_time(
-    decyear: float, leapyear=True, fannys_corr=False
+    decyear: float, leapyear=True, 
 ) -> datetime.datetime:
     """
     Convert a decimal year to a datetime object.
@@ -34,10 +34,6 @@ def decyear_to_date_time(
         date_time = base + timedelta(seconds=ndays.total_seconds() * decimals)
     else:
         date_time = base + timedelta(seconds=365.25 * 24 * 3600 * decimals)
-
-    # Apply a correction to correctly reverse Fanny's decyear which have ~1 day shift
-    if fannys_corr:
-        date_time -= timedelta(seconds=86399.975157)
 
     return date_time
 

@@ -32,7 +32,7 @@ import gtsa
     "--silent",
     is_flag=True,
     default=False,
-    help="Set to silence information printed to stdout.",
+    help="Set to silence stdout. Default is False.",
 )
 def main(pipeline, output_file, zoom_start, silent):
     verbose = not silent

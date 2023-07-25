@@ -1,6 +1,8 @@
 import click
 import gtsa
 
+VALID_SITES = ["south-cascade","mount-baker"]
+VALID_PRODUCTS = ["dem","ortho"]
 
 @click.command(
     help="Downloads historical orthoimage and digital elevation model data from https://doi.org/10.5281/zenodo.7297154"
@@ -9,50 +11,52 @@ import gtsa
     "-s",
     "--site",
     prompt=True,
+    type=click.Choice(VALID_SITES),
     default="south-cascade",
-    help="Use 'mount-baker' or 'south-cascade' (without quotes).",
+    help="Which site to download data for. Valid options are {VALID_SITES}. Default is 'south-cascade'.",
 )
 @click.option(
     "-od",
     "--outdir",
     prompt=True,
     default="data",
-    help="Your desired output directory path.",
+    help="Output directory path. Default is 'data'.",
 )
 @click.option(
     "-pr",
     "--product",
     prompt=True,
+    type=click.Choice(VALID_PRODUCTS),
     default="dem",
-    help="Use 'dem' or 'ortho' (without quotes).",
+    help="Which product to download. Valid options are {VALID_PRODUCTS}. Default is 'dem'.",
 )
 @click.option(
     "-ref",
     "--include_refdem",
     is_flag=True,
-    default=False,
-    help="Set to download reference DEM for site.",
+    default=True,
+    help="Set to download reference DEM for site. Default is False.",
 )
 @click.option(
     "-mw",
     "--workers",
     default=None,
     type=int,
-    help="Number of workers (cores) to be used.",
+    help="Number of cores. Default is logical cores -1.",
 )
 @click.option(
     "-ow",
     "--overwrite",
     is_flag=True,
     default=False,
-    help="Set to overwrite existing outputs.",
+    help="Set to overwrite. Default is False.",
 )
 @click.option(
     "-si",
     "--silent",
     is_flag=True,
     default=True,
-    help="Set to silence information printed to stdout.",
+    help="Set to silence stdout. Default is False.",
 )
 def main(
     site,
@@ -64,6 +68,8 @@ def main(
     silent,
 ):
     verbose = not silent
+    if not workers:
+        workers = psutil.cpu_count(logical=True) - 1
     gtsa.dataquery.download_historical_data(
         site=site,
         product=product,

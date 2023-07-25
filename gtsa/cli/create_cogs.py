@@ -18,7 +18,7 @@ import gtsa
     "--outdir",
     prompt=True,
     default="data/cogs",
-    help="Your desired output directory path.",
+    help="Output directory path.",
 )
 @click.option(
     "-mw",
@@ -31,14 +31,14 @@ import gtsa
     "--silent",
     is_flag=True,
     default=True,
-    help="Set to silence information printed to stdout.",
+    help="Set to silence stdout. Default is False.",
 )
 @click.option(
     "-ow",
     "--overwrite",
     is_flag=True,
     default=False,
-    help="Set to overwrite existing outputs.",
+    help="Set to overwrite. Default is False.",
 )
 def main(
     datadir,
