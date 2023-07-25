@@ -36,7 +36,7 @@ notebooks/processing/01_create_stacks.ipynb`
 #### Run memory-efficient time series analysis methods using dask
 From command line
 ```
-create_stack --help
+gtsa --help
 ```
 Python examples in 
 ```
