@@ -10,16 +10,15 @@ from datetime import datetime, timedelta
 import numpy as np
 import rioxarray
 from rasterio.enums import Resampling
-
+import calendar
 import gtsa
 
 
 def decyear_to_date_time(
-    decyear: float, leapyear=True, 
+    decyear: float,
 ) -> datetime.datetime:
     """
     Convert a decimal year to a datetime object.
-    If leapyear set to True, use the actual number of days in the year, otherwise, use the average value of 365.25.
     """
     # Get integer year and decimals
     year = int(np.trunc(decyear))
@@ -30,7 +29,7 @@ def decyear_to_date_time(
     ndays = base.replace(year=base.year + 1) - base
 
     # Calculate final date, taking into account leap years or average 365.25 days
-    if leapyear:
+    if calendar.isleap(year):
         date_time = base + timedelta(seconds=ndays.total_seconds() * decimals)
     else:
         date_time = base + timedelta(seconds=365.25 * 24 * 3600 * decimals)
@@ -38,20 +37,20 @@ def decyear_to_date_time(
     return date_time
 
 
-def date_time_to_decyear(date_time: float, leapyear=True) -> float:
+def date_time_to_decyear(date_time: float) -> float:
     """
     Convert a datetime object to a decimal year.
-    If leapyear set to True, use the actual number of days in the year, otherwise, use the average value of 365.25.
     """
-    base = datetime(date_time.year, 1, 1)
+    year = date_time.year
+    base = datetime(year, 1, 1)
     ddate = date_time - base
 
-    if leapyear:
-        ndays = (datetime(date_time.year + 1, 1, 1) - base).days
+    if calendar.isleap(year):
+        ndays = (datetime(year + 1, 1, 1) - base).days
     else:
         ndays = 365.25
 
-    decyear = date_time.year + ddate.total_seconds() / (ndays * 24 * 3600)
+    decyear = year + ddate.total_seconds() / (ndays * 24 * 3600)
 
     return decyear
 

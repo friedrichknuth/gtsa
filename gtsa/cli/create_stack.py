@@ -131,7 +131,11 @@ def main(
     if not reference_tif:
         reference_tif = files[-1]
         if verbose:
-            print('Using last GeoTIFF in datadir as reference grid: "{}"'.format(reference_tif))
+            print(
+                'Using last GeoTIFF in datadir as reference grid: "{}"'.format(
+                    reference_tif
+                )
+            )
 
     date_strings = [
         x[date_string_pattern_offset:-date_string_pattern_offset]

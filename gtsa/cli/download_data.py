@@ -1,8 +1,9 @@
 import click
 import gtsa
 
-VALID_SITES = ["south-cascade","mount-baker"]
-VALID_PRODUCTS = ["dem","ortho"]
+VALID_SITES = ["south-cascade", "mount-baker"]
+VALID_PRODUCTS = ["dem", "ortho"]
+
 
 @click.command(
     help="Downloads historical orthoimage and digital elevation model data from https://doi.org/10.5281/zenodo.7297154"

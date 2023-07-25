@@ -13,21 +13,26 @@ def create_prediction_timeseries(
     X = d.to_series().apply([utils.date_time_to_decyear]).values.squeeze()
     return X
 
+
 def nmad(array):
     if np.all(~np.isfinite(array)):
         return np.nan
     else:
         return 1.4826 * np.nanmedian(np.abs(array - np.nanmedian(array)))
 
-def dask_nmad(DataArray, dim='time'):
-    result = xr.apply_ufunc(nmad, 
-                            DataArray,
-                            input_core_dims=[[dim]],
-                            vectorize=True, 
-                            dask='parallelized',
-                            output_dtypes=[float],
-                           )
+
+def dask_nmad(DataArray, dim="time"):
+    result = xr.apply_ufunc(
+        nmad,
+        DataArray,
+        input_core_dims=[[dim]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[float],
+    )
     return result
+
+
 def GPR_model(X_train, y_train, kernel, alpha=2):
     X_train = X_train.squeeze()[:, np.newaxis]
     y_train = y_train.squeeze()
