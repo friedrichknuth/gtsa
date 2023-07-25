@@ -34,8 +34,14 @@ notebooks/processing/01_create_stacks.ipynb`
 ```
 
 #### Run memory-efficient time series analysis methods using dask
-- notebooks/processing/02_time_series_computations.ipynb
-- scripts/processing/02_time_series_computations.py
+From command line
+```
+create_stack --help
+```
+Python examples in 
+```
+notebooks/processing/02_time_series_computations.ipynb`
+```
 
 ### Visualization
 
