@@ -205,15 +205,19 @@ def main(
                 result.name = c
                 computations.append(result)
             if c == "polyfit":
-                # if we don't time series with only 1 data point well get warnings
-                min_count = 3  # TODO parameterize
-                # min_time_lag = 1Y # TODO add parameter for minimum time between first and last datapoint. specified -frequency might be a good default option
+                min_count = 3  # TODO maybe parameterize
+                # min_time_lag = 1Y # TODO add parameter for minimum time between first and last datapoint in time series
+                # specified -frequency option might be a good default option for min_time_lag
+                if verbose:
+                    print(f"Computing count")
+                    
                 ds["count"] = (
                     ds[variable_name]
                     .count(axis=0)
                     .chunk("auto", balance=True)
                     .compute()
                 )
+                print(f"Excluding time series with count < {min_count}.")
                 result = ds.where(ds["count"] > min_count)[variable_name].polyfit(
                     dim="time", deg=degree_tmp.pop(0)
                 )
