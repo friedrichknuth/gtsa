@@ -115,6 +115,13 @@ def check_computations(compute):
     default=False,
     help="Set to silence stdout.",
 )
+@click.option(
+    "-tr",
+    "--test_run",
+    is_flag=True,
+    default=False,
+    help="Set for testing. Extracts 500x500 window from center of stack.",
+)
 def main(
     input_file,
     variable_name,
@@ -128,6 +135,7 @@ def main(
     port,
     overwrite,
     silent,
+    test_run,
 ):
     verbose = not silent
 
@@ -171,9 +179,10 @@ def main(
 
     # # assign crs back
     # TODO add option to pass bounds or shapefile and clip
-    crs = rasterio.crs.CRS.from_epsg(32610)
-    ds = ds.rio.write_crs(crs)
-    ds = gtsa.geospatial.extract_dataset_center_window(ds, size=500)
+    # crs = rasterio.crs.CRS.from_epsg(32610)
+    # ds = ds.rio.write_crs(crs)
+    if test_run:
+        ds = gtsa.geospatial.extract_dataset_center_window(ds, size=500)
 
     output_directory = Path(outdir)
     output_directory.mkdir(parents=True, exist_ok=True)

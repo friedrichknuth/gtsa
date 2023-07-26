@@ -73,7 +73,7 @@ def dem_stack_bounds2polygon(tifs):
         return polygon_gdf
 
 
-def extract_dataset_center_window(ds, xdim="x", ydim="y", size=1000):
+def extract_dataset_center_window(ds, xdim="x", ydim="y", size=1000, verbose = False):
     cx, cy = _get_dataset_centroid(ds)
     offset = size / 2
     xmin = cx - offset
@@ -85,7 +85,8 @@ def extract_dataset_center_window(ds, xdim="x", ydim="y", size=1000):
 
     except Exception as e:
         if isinstance(type(e), type(rioxarray.exceptions.MissingCRS)):
-            print("No CRS defined.\nUsing xarray slicing to select data")
+            if verbose:
+                print("No CRS defined.\nUsing xarray slicing to select data")
             ds = ds.sel({xdim: slice(xmin, xmax), ydim: slice(ymax, ymin)})
 
     return ds
