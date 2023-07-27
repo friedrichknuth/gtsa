@@ -1,5 +1,5 @@
 # Geospatial Time Series Analysis
-Conveninet methods to stack geospatial rasters and run memory-efficient computations along the spatial or temporal axes. [![DOI](https://zenodo.org/badge/505980033.svg)](https://zenodo.org/badge/latestdoi/505980033)
+Methods to stack geospatial rasters and run memory-efficient computations. [![DOI](https://zenodo.org/badge/505980033.svg)](https://zenodo.org/badge/latestdoi/505980033)
 
 
 ## Installation
@@ -79,6 +79,8 @@ gtsa --input_file data/dems/south-cascade/temporal/stack.zarr \
 
 ### Visualization
 
+See rendered interactive map [examples here](https://nbviewer.org/github/friedrichknuth/gtsa/blob/main/notebooks/visualization/02_create_cog_map.ipynb). 
+
 #### Download sample orthoimage data
 ```
 download_data --site south-cascade \
@@ -105,7 +107,7 @@ create_cog_map --pipeline notebooks/visualization/pipeline.json \
 ```
 
 ## Python examples
-See Jupyter Notebooks in `notebooks/`
+See Jupyter Notebooks in `notebooks/` for example Python code.
 
 ## Data citations
 
