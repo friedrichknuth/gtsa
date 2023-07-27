@@ -1,5 +1,6 @@
 # Geospatial Time Series Analysis
-Conveninet methods to stack geospatial rasters and run memory-efficient computations along the spatial or temporal axes. 
+Conveninet methods to stack geospatial rasters and run memory-efficient computations along the spatial or temporal axes. [![DOI](https://zenodo.org/badge/505980033.svg)](https://zenodo.org/badge/latestdoi/505980033)
+
 
 ## Installation
 
