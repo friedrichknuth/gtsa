@@ -260,7 +260,7 @@ def xr_stack_geotifs(
             nc_files.append(out_fn)
             out_dir = str(Path(out_fn).parents[0])
             out_dirs.append(out_dir)
-            src = xr.open_dataset(out_fn)
+            src = xr.open_dataset(out_fn, chunks="auto")
             datasets.append(src)
 
         else:
@@ -296,11 +296,12 @@ def xr_stack_geotifs(
         ds = xr.open_mfdataset(nc_files, chunks="auto")
         ds = ds.sortby("time")
         ds.rio.write_crs(ref.rio.crs, inplace=True)
-        return ds
+        return ds.chunk("auto", balance=True)
 
     ds = xr.concat(datasets, dim="time", combine_attrs="no_conflicts")
     ds = ds.sortby("time")
-    return ds
+    ds.rio.write_crs(ref.rio.crs, inplace=True)
+    return ds.chunk("auto", balance=True)
 
 
 def check_xr_rio_ds_match(ds1, ds2):
@@ -336,9 +337,10 @@ def create_zarr_stack(
     verbose=True,
     cleanup=False,
 ):
-    # TODO - writing to zarr with ds.rio.crs assigned fails - not sure how to preserve the crs in the saved file
-
     ds = xarray_dataset
+    crs = ds.rio.crs
+    print(crs)
+
     output_directory = Path(output_directory)
     output_directory.mkdir(parents=True, exist_ok=True)
 
@@ -402,8 +404,6 @@ def create_zarr_stack(
             print(source_array.info)
             del source_group
             del source_array
-
-        if verbose:
             print("Rechunking temporary zarr stack and saving as")
             print(str(zarr_stack_fn))
 
@@ -415,6 +415,8 @@ def create_zarr_stack(
             zarr_stack_tmp, chunks={"time": t, "y": y, "x": x}, engine="zarr"
         )
         ds[variable_name].encoding = {"chunks": (t, y, x)}
+        ds.rio.write_crs(crs, inplace=True)
+        ds.attrs["crs"] = crs.to_wkt()
         ds.to_zarr(zarr_stack_fn)
 
         if verbose:
@@ -438,6 +440,8 @@ def create_zarr_stack(
     if verbose:
         print("Zarr file at", zarr_stack_fn)
 
+    ds.rio.write_crs(crs, inplace=True)
+    ds.attrs["crs"] = crs.to_wkt()
     return ds
 
 

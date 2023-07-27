@@ -139,6 +139,7 @@ def main(
     silent,
     test_run,
 ):
+    # TODO add option to pass bounds or shapefile and clip
     verbose = not silent
 
     if degree:
@@ -160,6 +161,12 @@ def main(
 
     ds = xr.open_dataset(input_file, chunks="auto", engine="zarr")
 
+    try:
+        crs = ds.attrs["crs"]
+        ds = ds.rio.write_crs(crs)
+    except KeyError:
+        print("No crs found in Zarr dataset attributes. Skipping.")
+
     # optimize chunks and reload lazily
     tc, yc, xc = gtsa.io.determine_optimal_chuck_size(ds, verbose=verbose)
     ds = xr.open_dataset(
@@ -178,11 +185,6 @@ def main(
             raise ValueError(
                 f"Only {VALID_FREQUENCIES} supported as frequency options for timestamp conversion and model fitting."
             )
-
-    # # assign crs back
-    # TODO add option to pass bounds or shapefile and clip
-    # crs = rasterio.crs.CRS.from_epsg(32610)
-    # ds = ds.rio.write_crs(crs)
     if test_run:
         ds = gtsa.geospatial.extract_dataset_center_window(ds, size=500)
 
