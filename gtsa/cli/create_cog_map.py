@@ -18,23 +18,30 @@ import gtsa
     "-of",
     "--output_file",
     default="map.html",
-    help="Output HTML file name.",
+    help="Output HTML file name. Default is 'map.html'.",
 )
 @click.option(
     "-z",
     "--zoom_start",
     prompt=False,
     default=11,
-    help="Zoom start for map",
+    help="Zoom start for map. Default is 11.",
+)
+@click.option(
+    "-ow",
+    "--overwrite",
+    is_flag=True,
+    default=False,
+    help="Set to overwrite.",
 )
 @click.option(
     "-si",
     "--silent",
     is_flag=True,
     default=False,
-    help="Set to silence stdout. Default is False.",
+    help="Set to silence stdout.",
 )
-def main(pipeline, output_file, zoom_start, silent):
+def main(pipeline, output_file, zoom_start, silent, overwrite):
     verbose = not silent
 
     with open(pipeline) as json_file:
@@ -45,10 +52,12 @@ def main(pipeline, output_file, zoom_start, silent):
         zoom_start=zoom_start,
         verbose=verbose,
     )
-    m.save(output_file)
-    if verbose:
-        print("map saved to", output_file)
-
+    if not Path(output_file).exists() or overwrite:
+        m.save(output_file)
+        if verbose:
+            print("map saved to", output_file)
+    elif Path(output_file).exists() and not overwrite:
+        print(f"{output_file} exists. Set --overwrite to overwrite.")
     return
 
 

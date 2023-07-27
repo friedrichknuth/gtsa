@@ -175,7 +175,7 @@ def create_cogs(
         if verbose:
             print("Processing", len(payload), "rasters with", workers, "workers")
         with tqdm(total=len(payload)) as pbar:
-            pool = concurrent.futures.ThreadPoolExecutor(workers=workers)
+            pool = concurrent.futures.ThreadPoolExecutor(max_workers=workers)
             futures = {pool.submit(to_raster, x): x for x in payload}
             for future in concurrent.futures.as_completed(futures):
                 pbar.update(1)

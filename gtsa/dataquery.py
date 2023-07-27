@@ -130,7 +130,7 @@ def download_historical_data(
                 print("Using", workers, "cores")
                 print("Downloading:")
                 for i in payload:
-                    print(i[0])
+                    print(i[0].replace("?download=1", ""))
                 print("Writing to", str(output_directory))
 
             thread_downloads(

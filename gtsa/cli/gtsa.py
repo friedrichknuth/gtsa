@@ -21,6 +21,7 @@ VALID_COMPUTATIONS = [
     "nmad",
     "polyfit",
 ]
+VALID_FREQUENCIES = ["1Y"]
 
 
 def check_computations(compute):
@@ -38,7 +39,7 @@ def check_computations(compute):
     "-if",
     "--input_file",
     prompt=True,
-    default="data/stack.zarr",
+    default="data/dems/south-cascade/temporal/stack.zarr",
     help="Path to Zarr file. Default is 'data/stack.zarr'.",
 )
 @click.option(
@@ -67,13 +68,14 @@ def check_computations(compute):
     "--frequency",
     multiple=True,
     default=["1Y"],
-    help="Frequency for model fitting. E.g. datetimes are converted to decimal year floats is '1Y'. Default is '1Y'.",
+    type=click.Choice(VALID_FREQUENCIES),
+    help=f"Frequency for timestamp conversion and model fitting. E.g. if '1Y', datetimes are converted to decimal year floats. Valid options are {VALID_FREQUENCIES}. Default is '1Y'.",
 )
 @click.option(
     "-od",
     "--outdir",
-    default="data/outputs",
-    help="Output directory path. Default is 'data/outputs'.",
+    default="outputs",
+    help="Output directory path. Default is 'outputs'.",
 )
 @click.option(
     "-mw",
@@ -174,7 +176,7 @@ def main(
             ds["time"] = decyear_times
         else:
             raise ValueError(
-                f"Only {i} supported as frequency option. Skipping timestamp conversion."
+                f"Only {VALID_FREQUENCIES} supported as frequency options for timestamp conversion and model fitting."
             )
 
     # # assign crs back
@@ -193,7 +195,8 @@ def main(
     ):  # disable heartbeat check
         CORE_MODULES = ["count", "mean", "std", "min", "max", "median", "sum"]
         computations = []
-        degree_tmp = degree.copy()  # will need these again later
+        if degree:
+            degree_tmp = degree.copy()  # will need these again later
         for c in compute:
             if c in CORE_MODULES:
                 m = getattr(ds[variable_name], c)
@@ -210,12 +213,9 @@ def main(
                 # specified -frequency option might be a good default option for min_time_lag
                 if verbose:
                     print(f"Computing count")
-                    
+
                 ds["count"] = (
-                    ds[variable_name]
-                    .count(axis=0)
-                    .chunk("auto", balance=True)
-                    .compute()
+                    ds[variable_name].count(axis=0).chunk("auto", balance=True)
                 )
                 print(f"Excluding time series with count < {min_count}.")
                 result = ds.where(ds["count"] > min_count)[variable_name].polyfit(
@@ -238,7 +238,7 @@ def main(
             if overwrite or not output_file.exists():
                 if verbose:
                     print("Computing", c)
-                result.to_zarr(output_file)
+                    result.to_zarr(output_file)
                 if verbose:
                     print("Saved", output_file)
             elif verbose:

@@ -1,5 +1,5 @@
 # Geospatial Time Series Analysis
-Methods to stack geospatial rasters and run memory-efficient computations. 
+Conveninet methods to stack geospatial rasters and run memory-efficient computations along the spatial or temporal axes. 
 
 ## Installation
 
@@ -19,72 +19,93 @@ $ conda activate gtsa
 $ pip install -e .
 ```
 
-## Examples
+## Command Line examples
+
+See `command --help` for more information about each command listed below.
 
 ### Processing
 
-#### Stack single band rasters and chunk along the time dimension for efficient data retrieval
-From command line
-```
-create_stack --help
-```
-Python examples in 
-```
-notebooks/processing/01_create_stacks.ipynb`
-```
-
-#### Run memory-efficient time series analysis methods using dask
-From command line
-```
-gtsa --help
-```
-Python examples in 
-```
-notebooks/processing/02_time_series_computations.ipynb`
-```
-
-### Visualization
-
-
-#### Convert single band rasters to Cloud Optimized GeoTIFFs (COGs)
-From command line
-```
-create_cogs --help
-```
-
-Python examples in 
-```
-notebooks/visualization/01_create_cogs.ipynb
-```
-
-#### Create interactive folium map for efficient visualization
-From command line
-```
-create_cog_map --help
-```
-
-Python examples in 
-```
-notebooks/visualization/02_create_cog_map.ipynb
-```
-
-## Download sample data
-From command line
-```
-download_data --help
-```
-
-Example
-
+#### Download sample Digital Elevation Model (DEM) data
 ```
 download_data --site south-cascade \
               --outdir data \
               --product dem \
               --include_refdem \
-              --max_workers 8 \
-              --verbose \
-              --overwrite
+              --workers 8 \
+              --overwrite        
 ```
+
+#### Stack single-band rasters and chunk along the time dimension
+```
+create_stack --datadir data/dems/south-cascade \
+             --date_string_format %Y%m%d \
+             --date_string_pattern _........_ \
+             --date_string_pattern_offset 1 \
+             --outdir data/dems/south-cascade \
+             --dask_enabled \
+             --overwrite
+```
+
+#### Run memory-efficient time series analysis methods using dask
+
+```
+c=count # count, mean, std, min, max, median, sum or nmad
+gtsa --input_file data/dems/south-cascade/temporal/stack.zarr \
+     --compute $c \
+     --outdir data/dems/south-cascade/outputs \
+     --workers 8\
+     --dask_enabled \
+     --overwrite \ 
+     --test_run
+
+# Linear regression
+gtsa --input_file data/dems/south-cascade/temporal/stack.zarr \
+     --compute polyfit \
+     --degree 1 \
+     --frequency 1Y \
+     --outdir data/dems/south-cascade/outputs \
+     --dask_enabled
+
+# Higher order polynomial fits
+d=3 
+gtsa --input_file data/dems/south-cascade/temporal/stack.zarr \
+     --compute polyfit \
+     --degree $d \
+     --frequency 1Y \
+     --outdir data/dems/south-cascade/outputs \
+     --dask_enabled
+```
+
+### Visualization
+
+#### Download sample orthoimage data
+```
+download_data --site south-cascade \
+              --outdir data \
+              --product ortho \
+              --workers 8 \
+              --overwrite        
+```
+
+#### Convert single-band rasters to Cloud Optimized GeoTIFFs (COGs)
+```
+create_cogs --datadir data/orthos/south-cascade \
+            --outdir data/orthos/south-cascade/cogs \
+            --workers 8 \
+            --overwrite
+```
+
+
+#### Create interactive folium map for efficient visualization
+```
+create_cog_map --pipeline notebooks/visualization/pipeline.json \
+               --output_file map.html \
+               --zoom_start 11 \ 
+               --overwrite
+```
+
+## Python examples
+See Jupyter Notebooks in `notebooks/`
 
 ## Data citations
 

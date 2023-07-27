@@ -35,8 +35,8 @@ VALID_PRODUCTS = ["dem", "ortho"]
     "-ref",
     "--include_refdem",
     is_flag=True,
-    default=True,
-    help="Set to download reference DEM for site. Default is False.",
+    default=False,
+    help="Set to download reference DEM for site.",
 )
 @click.option(
     "-mw",
@@ -56,7 +56,7 @@ VALID_PRODUCTS = ["dem", "ortho"]
     "-si",
     "--silent",
     is_flag=True,
-    default=True,
+    default=False,
     help="Set to silence stdout. Default is False.",
 )
 def main(

@@ -73,7 +73,7 @@ def dem_stack_bounds2polygon(tifs):
         return polygon_gdf
 
 
-def extract_dataset_center_window(ds, xdim="x", ydim="y", size=1000, verbose = False):
+def extract_dataset_center_window(ds, xdim="x", ydim="y", size=1000, verbose=False):
     cx, cy = _get_dataset_centroid(ds)
     offset = size / 2
     xmin = cx - offset

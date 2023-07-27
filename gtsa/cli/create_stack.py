@@ -8,7 +8,7 @@ import gtsa
 
 
 @click.command(
-    help="Stack single-band GeoTIFFs as Zarr file for memory-efficient data retrieval and processing."
+    help="Stack single-band GeoTIFFs for memory-efficient data retrieval and processing."
 )
 @click.option(
     "-dd",
@@ -27,8 +27,8 @@ import gtsa
     "-od",
     "--outdir",
     prompt=True,
-    default="data/stacks",
-    help="Output directory path. Default is 'data/stacks'.",
+    default="data/dems/south-cascade",
+    help="Output directory path. Default is 'data/dems/south-cascade'.",
 )
 @click.option(
     "-dsf",
@@ -128,15 +128,6 @@ def main(
 
     files = [x.as_posix() for x in sorted(Path(datadir).glob("*.tif"))]
 
-    if not reference_tif:
-        reference_tif = files[-1]
-        if verbose:
-            print(
-                'Using last GeoTIFF in datadir as reference grid: "{}"'.format(
-                    reference_tif
-                )
-            )
-
     date_strings = [
         x[date_string_pattern_offset:-date_string_pattern_offset]
         for x in gtsa.io.parse_timestamps(
@@ -147,6 +138,15 @@ def main(
     # ensure chronological sorting
     date_strings, files = list(zip(*sorted(zip(date_strings, files))))
     date_times = [pd.to_datetime(x, format=date_string_format) for x in date_strings]
+
+    if not reference_tif:
+        reference_tif = files[-1]
+        if verbose:
+            print(
+                'Using most recent GeoTIFF as reference grid: "{}"'.format(
+                    reference_tif
+                )
+            )
 
     ds = gtsa.io.xr_stack_geotifs(
         files,
