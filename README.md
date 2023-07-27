@@ -39,9 +39,9 @@ download_data --site south-cascade \
 #### Stack single-band rasters and chunk along the time dimension
 ```
 create_stack --datadir data/dems/south-cascade \
-             --date_string_format %Y%m%d \
-             --date_string_pattern _........_ \
-             --date_string_pattern_offset 1 \
+             --date_string_format %Y%m%d \ # %Y-%m-%d
+             --date_string_pattern _........_ \ # ....-..-..
+             --date_string_pattern_offset 1 \ # 0
              --outdir data/dems/south-cascade \
              --dask_enabled \
              --overwrite
@@ -95,7 +95,6 @@ create_cogs --datadir data/orthos/south-cascade \
             --workers 8 \
             --overwrite
 ```
-
 
 #### Create interactive folium map for efficient visualization
 ```
