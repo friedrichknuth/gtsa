@@ -1,5 +1,6 @@
 import geopandas as gpd
 import numpy as np
+import scipy
 import math
 import rasterio
 from shapely.geometry import Point, Polygon
@@ -73,8 +74,14 @@ def dem_stack_bounds2polygon(tifs):
         return polygon_gdf
 
 
-def extract_dataset_center_window(ds, xdim="x", ydim="y", size=1000, verbose=False):
+def extract_dataset_center_window(ds, xdim="x", ydim="y", size=256, verbose=True):
+    xmode = np.abs(scipy.stats.mode(ds["y"].diff("y"))[0])
+    ymode = np.abs(scipy.stats.mode(ds["y"].diff("y"))[0])
+    size = size * np.mean(np.array([xmode, ymode]))
     cx, cy = _get_dataset_centroid(ds)
+    if verbose:
+        print(f"Dataset center: {cx}, {cy}")
+        print(f"Test column size: {size} by {size} in spatial coordinate units.")
     offset = size / 2
     xmin = cx - offset
     xmax = cx + offset
@@ -86,7 +93,9 @@ def extract_dataset_center_window(ds, xdim="x", ydim="y", size=1000, verbose=Fal
     except Exception as e:
         if isinstance(type(e), type(rioxarray.exceptions.MissingCRS)):
             if verbose:
-                print("No CRS defined.\nUsing xarray slicing to select data")
+                print(
+                    "No CRS defined.\nUsing xarray slicing to select data along spatial coordinate axes."
+                )
             ds = ds.sel({xdim: slice(xmin, xmax), ydim: slice(ymax, ymin)})
 
     return ds

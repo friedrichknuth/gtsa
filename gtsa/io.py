@@ -12,9 +12,34 @@ import zarr
 from dask.distributed import Client, LocalCluster
 import logging
 import webbrowser
-import warnings
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 
-warnings.filterwarnings("ignore")
+"""
+Basic io functions.
+"""
+
+
+@contextmanager
+def redirect_stdout_stderr(stdout_fn=None, stderr_fn=None):
+    """
+    Writes stdout and/or stderr to file.
+    Use os.devnull as the file name to silence entirely.
+    """
+    Path(stdout_fn).parent.mkdir(parents=True, exist_ok=True)
+    Path(stderr_fn).parent.mkdir(parents=True, exist_ok=True)
+
+    if stdout_fn and stderr_fn:
+        with open(stdout_fn, "w") as stdout, open(stderr_fn, "w") as stderr:
+            with redirect_stdout(stdout) as out, redirect_stderr(stderr) as err:
+                yield (err, out)
+    elif stdout_fn:
+        with open(stdout_fn, "w") as stdout:
+            with redirect_stdout(stdout) as out:
+                yield out
+    elif stderr_fn:
+        with open(stderr_fn, "w") as stderr:
+            with redirect_stdout(stderr) as err:
+                yield err
 
 
 def parse_urls_from_S3_bucket(
