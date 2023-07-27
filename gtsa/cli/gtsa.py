@@ -194,7 +194,7 @@ def main(
     # TODO enable custom scratch space with dask.config.set({'temporary_directory': 'path/to/dir'})
     with dask.config.set(
         {"distributed.scheduler.worker-ttl": None}
-    ):  # disable heartbeat check
+    ) and dask.config.set({"distributed.comm.timeouts.tcp": "50s"}):  # trying disable irrelevant heartbeat check https://github.com/dask/distributed/issues/1674
         CORE_MODULES = ["count", "mean", "std", "min", "max", "median", "sum"]
         computations = []
         if degree:
