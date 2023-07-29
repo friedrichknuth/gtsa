@@ -38,31 +38,31 @@ See `command --help` for more information about each command listed below.
 ### Processing
 
 #### Stack single-band rasters and chunk along the analysis dimension
-<img src="./tests/img/stacking-light.png#gh-light-mode-only" align="left" width="500px">
-<img src="./tests/img/stacking-dark.png#gh-dark-mode-only" align="left" width="500px">
+<img src="./tests/img/stacking-light.png#gh-light-mode-only" align="left" width="480px">
+<img src="./tests/img/stacking-dark.png#gh-dark-mode-only" align="left" width="480px">
 <pre><code> create_stack --datadir data/dems/south-cascade \
              --date_string_format %Y%m%d \
              --date_string_pattern _........_ \
              --date_string_pattern_offset 1 \
              --outdir data/dems/south-cascade \
              --dask_enabled \
-             --overwrite
-</code></pre>
+             --overwrite</code></pre>
 <br clear="left"/>
 
 #### Run memory-efficient time series analysis methods using dask
+Basic `--compute` options include `count`, `min`, `max`, `mean`, `std`, `median`, `sum`, and `nmad`.  
 
-Basic `--compute` options include `count`, `min`, `max`, `mean`, `std`, `median`, `sum`, and `nmad`.
-```
-computation=count
+<img src="./tests/img/task_graph.gif" align="left" width="375px">
+<pre><code>computation=count
 gtsa --input_file data/dems/south-cascade/temporal/stack.zarr \
      --compute $computation \
      --outdir data/dems/south-cascade/outputs \
      --workers 8\
      --dask_enabled \
      --overwrite \ 
-     --test_run
-```
+     --test_run</code></pre>
+<br clear="left"/> 
+
 Linear regression
 ```
 gtsa --input_file data/dems/south-cascade/temporal/stack.zarr \
