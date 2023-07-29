@@ -8,7 +8,7 @@ import gtsa
 
 
 @click.command(
-    help="Stack single-band GeoTIFFs for memory-efficient data retrieval and processing."
+    help="Stack single-band GeoTIFFs for memory-efficient data retrieval and processing. Both spatial (*.nc) and temporal (.zarr) stacks are created. All input raster grids are reprojected to the reference raster grid. If no --reference_tif is specified, the last in time is selected.  "
 )
 @click.option(
     "-dd",
@@ -21,7 +21,7 @@ import gtsa
     "-ref",
     "--reference_tif",
     default=None,
-    help="Reference GeoTIFF used as template grid to perform stacking. If None, last GeoTIFF in datadir is used.",
+    help="Reference GeoTIFF used as template grid to perform stacking. If None, temporally last GeoTIFF in datadir is used.",
 )
 @click.option(
     "-od",
