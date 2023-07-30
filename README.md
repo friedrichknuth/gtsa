@@ -8,7 +8,6 @@ Methods to stack geospatial rasters and run memory-efficient computations.
 Sometimes your data is larger than your local memory and not everyone has access to high-performance computing environments. This excludes individuals from participating in studies with the objective to process larger-than-memory datasets. 
 
 When data cubes are too large to load into memory, <a href="https://zarr.readthedocs.io/">Zarr</a> and <a href="https://www.dask.org/">dask</a> enable chunked storage and parallelized data retrieval. GTSA streamlines this process for geospatial raster datasets, enabling memory efficient comptutations along both the spatial and temporal axes.
-
 <br clear="right"/>
 
 ## Installation
