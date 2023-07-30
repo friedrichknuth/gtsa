@@ -2,8 +2,8 @@
 Methods to stack geospatial rasters and run memory-efficient computations.  
 [![DOI](https://zenodo.org/badge/505980033.svg)](https://zenodo.org/badge/latestdoi/505980033)
 
-<img src="./tests/img/intro-light.png#gh-light-mode-only" align="right" width="510px">
-<img src="./tests/img/intro-dark.png#gh-dark-mode-only" align="right" width="510px">
+<img src="https://github.com/friedrichknuth/gtsa-data/blob/main/img/intro-light.png?raw=true#gh-light-mode-only" align="right" width="510px">
+<img src="https://github.com/friedrichknuth/gtsa-data/blob/main/img/intro-dark.png?raw=true#gh-dark-mode-only" align="right" width="510px">
 <h2>Motivation</h2>
 Sometimes your data is larger than your local memory and not everyone has access to high-performance computing environments. This excludes individuals from participating in studies with the objective to process larger-than-memory datasets. 
 <br><br>
@@ -38,8 +38,8 @@ See `command --help` for more information about each command listed below.
 ### Processing
 
 #### Stack single-band rasters and chunk along the analysis dimension
-<img src="./tests/img/stacking-light.png#gh-light-mode-only" align="left" width="480px">
-<img src="./tests/img/stacking-dark.png#gh-dark-mode-only" align="left" width="480px">
+<img src="https://github.com/friedrichknuth/gtsa-data/blob/main/img/stacking-light.png?raw=true#gh-light-mode-only" align="left" width="480px">
+<img src="https://github.com/friedrichknuth/gtsa-data/blob/main/img/stacking-dark.png?raw=true#gh-dark-mode-only" align="left" width="480px">
 <pre><code> create_stack --datadir data/dems/south-cascade \
              --date_string_format %Y%m%d \
              --date_string_pattern _........_ \
@@ -52,7 +52,7 @@ See `command --help` for more information about each command listed below.
 #### Run memory-efficient time series analysis methods using dask
 Basic `--compute` options include `count`, `min`, `max`, `mean`, `std`, `median`, `sum`, and `nmad`.  
 
-<img src="./tests/img/task_graph.gif" align="left" width="375px">
+<img src="https://github.com/friedrichknuth/gtsa-data/blob/main/img/task_graph.gif?raw=true" align="left" width="375px">
 <pre><code>computation=count
 gtsa --input_file data/dems/south-cascade/temporal/stack.zarr \
      --compute $computation \
