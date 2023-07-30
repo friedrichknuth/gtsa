@@ -82,6 +82,13 @@ gtsa --input_file data/dems/south-cascade/temporal/stack.zarr \
      --outdir data/dems/south-cascade/outputs \
      --dask_enabled
 ```
+Apply a custom function you define in `gtsa.custom.func`.
+```
+gtsa --input_file data/dems/south-cascade/temporal/stack.zarr \
+     --compute custom \
+     --outdir data/dems/south-cascade/outputs \
+     --dask_enabled
+```
 ### Visualization
 
 #### Convert single-band rasters to Cloud Optimized GeoTIFFs (COGs)
@@ -130,8 +137,8 @@ Knuth. F. and D. Shean. (2022). Historical digital elevation models (DEMs) and o
 Knuth, F., Shean, D., Bhushan, S., Schwat, E., Alexandrov, O., McNeil, C., Dehecq, A., Florentine, C. and O’Neel, S., 2023. Historical Structure from Motion (HSfM): Automated processing of historical aerial photographs for long-term topographic change analysis. Remote Sensing of Environment, 285, p.113379. https://doi.org/10.1016/j.rse.2022.113379 
 
 ## Similar software
-- NASA Ames Stereo Pipeline: [dem_mosaic](https://stereopipeline.readthedocs.io/en/latest/tools/dem_mosaic.html)
+* NASA Ames Stereo Pipeline: [dem_mosaic](https://stereopipeline.readthedocs.io/en/latest/tools/dem_mosaic.html)
 
 ## Complimentary software 
-- [xDEM](https://xdem.readthedocs.io)
-- [xarray-spatial](https://xarray-spatial.org/)
+* [xDEM](https://xdem.readthedocs.io)
+* [xarray-spatial](https://xarray-spatial.org/)
