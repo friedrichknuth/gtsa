@@ -23,6 +23,7 @@ VALID_COMPUTATIONS = [
     "sum",
     "nmad",
     "polyfit",
+    "custom",
 ]
 VALID_FREQUENCIES = ["1Y"]
 
@@ -210,10 +211,10 @@ def main(
     )
 
     # this reduces memory usage, but it's slower than the above
-    # tc, yc, xc = gtsa.io.determine_optimal_chuck_size(ds, verbose=verbose)
-    # ds = xr.open_dataset(
-    #     input_file, chunks={"time": tc, "y": yc, "x": xc}, engine="zarr"
-    # )
+    tc, yc, xc = gtsa.io.determine_optimal_chuck_size(ds, verbose=verbose)
+    ds = xr.open_dataset(
+        input_file, chunks={"time": tc, "y": yc, "x": xc}, engine="zarr"
+    )
 
     if not ds.rio.crs:
         try:
@@ -302,6 +303,10 @@ def main(
             result = ds.where(ds["count"] > min_count)[variable_name].polyfit(
                 dim="time", deg=degree_tmp.pop(0)
             )
+            computations.append(result)
+        if c == "custom":
+            result = gtsa.custom.func(ds, variable_name=variable_name)
+            result.name = c
             computations.append(result)
 
     for i, result in enumerate(computations):

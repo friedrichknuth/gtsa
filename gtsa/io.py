@@ -475,7 +475,7 @@ def determine_optimal_chuck_size(
 ):
     if verbose:
         print("Dask chunk size:")
-    ## set chunk size to 1 MB if single time series array < 1 MB in size
+    ## set chunk size to 5 MB if single time series array < 1 MB in size
     ## else increase to max of 1 GB chunk sizes.
 
     time_series_array_size = (
@@ -488,14 +488,15 @@ def determine_optimal_chuck_size(
         )
         .nbytes
     )
+    MB = 1048576
     if time_series_array_size < 1e6:
-        chunk_size_limit = 2e6
+        chunk_size_limit = 2 * MB
     elif time_series_array_size < 1e7:
-        chunk_size_limit = 2e7
+        chunk_size_limit = 20 * MB
     elif time_series_array_size < 1e8:
-        chunk_size_limit = 2e8
+        chunk_size_limit = 200 * MB
     else:
-        chunk_size_limit = 1e9
+        chunk_size_limit = 1000 * MB
     arr = ds[variable_name].data.rechunk(
         {0: -1, 1: "auto", 2: "auto"}, block_size_limit=chunk_size_limit, balance=True
     )
@@ -506,7 +507,7 @@ def determine_optimal_chuck_size(
         print(
             "Chunk size:",
             ds[variable_name][:tc, :yc, :xc].nbytes,
-            "(" + str(round(chunksize, 1)) + "M)",
+            "(" + str(round(chunksize, 1)) + "MB)",
         )
 
     return tc, yc, xc
