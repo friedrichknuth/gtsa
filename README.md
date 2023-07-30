@@ -2,12 +2,13 @@
 Methods to stack geospatial rasters and run memory-efficient computations.  
 [![DOI](https://zenodo.org/badge/505980033.svg)](https://zenodo.org/badge/latestdoi/505980033)
 
-<img src="https://github.com/friedrichknuth/gtsa-data/blob/main/img/intro-light.png?raw=true#gh-light-mode-only" align="right" width="510px">
-<img src="https://github.com/friedrichknuth/gtsa-data/blob/main/img/intro-dark.png?raw=true#gh-dark-mode-only" align="right" width="510px">
 <h2>Motivation</h2>
+<img src="https://github.com/friedrichknuth/gtsa-data/blob/main/img/intro.png?raw=true" align="right" width="250px">
+
 Sometimes your data is larger than your local memory and not everyone has access to high-performance computing environments. This excludes individuals from participating in studies with the objective to process larger-than-memory datasets. 
-<br><br>
-When data cubes are too large to load into memory, <a href="https://zarr.readthedocs.io/">Zarr</a> and <a href="https://www.dask.org/">dask</a> enable chunked storage and parallelized data retrieval. GTSA streamlines this process for geospatial raster datasets, enabling memory efficient comptutations along both the spatial <b>and</b> temporal axes.
+
+When data cubes are too large to load into memory, <a href="https://zarr.readthedocs.io/">Zarr</a> and <a href="https://www.dask.org/">dask</a> enable chunked storage and parallelized data retrieval. GTSA streamlines this process for geospatial raster datasets, enabling memory efficient comptutations along both the spatial and temporal axes.
+
 <br clear="right"/>
 
 ## Installation
@@ -50,7 +51,7 @@ See `command --help` for more information about each command listed below.
 <br clear="left"/>
 
 #### Run memory-efficient time series analysis methods using dask
-Basic `--compute` options include `count`, `min`, `max`, `mean`, `std`, `median`, `sum`, and `nmad`.  
+Basic `--compute` options include `count`, `min`, `max`, `mean`, `std`, `median`, `sum`, and `nmad`. 
 
 <img src="https://github.com/friedrichknuth/gtsa-data/blob/main/img/task_graph.gif?raw=true" align="left" width="375px">
 <pre><code>computation=count
