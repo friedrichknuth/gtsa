@@ -63,7 +63,7 @@ gtsa --input_file data/dems/south-cascade/temporal/stack.zarr \
      --test_run</code></pre>
 <br clear="left"/> 
 
-Linear regression
+#### Linear regression
 ```
 gtsa --input_file data/dems/south-cascade/temporal/stack.zarr \
      --compute polyfit \
@@ -72,7 +72,7 @@ gtsa --input_file data/dems/south-cascade/temporal/stack.zarr \
      --outdir data/dems/south-cascade/outputs \
      --dask_enabled
 ```
-Higher-order polynomial fits
+#### Higher-order polynomial fits
 ```
 degree=3 
 gtsa --input_file data/dems/south-cascade/temporal/stack.zarr \
@@ -82,7 +82,7 @@ gtsa --input_file data/dems/south-cascade/temporal/stack.zarr \
      --outdir data/dems/south-cascade/outputs \
      --dask_enabled
 ```
-Apply a custom function you define in `gtsa.custom.func`.
+#### Apply a custom function you define in `gtsa.custom.func`.
 ```
 gtsa --input_file data/dems/south-cascade/temporal/stack.zarr \
      --compute custom \
