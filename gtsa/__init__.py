@@ -5,3 +5,4 @@ import gtsa.temporal
 import gtsa.geospatial
 import gtsa.dataquery
 import gtsa.custom
+import gtsa.filters
