@@ -10,6 +10,7 @@ import dask
 import warnings
 import bokeh
 import distributed
+import rasterio
 
 import gtsa
 
@@ -306,7 +307,7 @@ def main(
             computations.append(result)
         if c == "custom":
             result = gtsa.custom.func(ds, variable_name=variable_name)
-            result.name = c
+            # result.name = c
             computations.append(result)
 
     for i, result in enumerate(computations):

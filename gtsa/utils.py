@@ -19,6 +19,8 @@ def decyear_to_date_time(
 ) -> datetime.datetime:
     """
     Convert a decimal year to a datetime object.
+
+    Modified from: https://github.com/adehecq/ragmac_xdem/blob/master/ragmac_xdem/utils.py#L30
     """
     # Get integer year and decimals
     year = int(np.trunc(decyear))
@@ -40,6 +42,8 @@ def decyear_to_date_time(
 def date_time_to_decyear(date_time: float) -> float:
     """
     Convert a datetime object to a decimal year.
+
+    Modified from: https://github.com/adehecq/ragmac_xdem/blob/master/ragmac_xdem/utils.py#L56
     """
     year = date_time.year
     base = datetime(year, 1, 1)

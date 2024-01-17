@@ -118,7 +118,7 @@ def dask_start_cluster(
     workers,
     threads=1,
     ip_address=None,
-    port=":8786",
+    port=8786,
     open_browser=False,
     verbose=True,
 ):
@@ -126,6 +126,9 @@ def dask_start_cluster(
     Starts a dask cluster. Can provide a custom IP or URL to view the progress dashboard.
     This may be necessary if working on a remote machine.
     """
+
+    port = str(port)
+
     cluster = LocalCluster(
         n_workers=workers,
         threads_per_worker=threads,
@@ -150,6 +153,8 @@ def dask_start_cluster(
     if port not in url:
         if verbose:
             print("Port", port, "already occupied")
+            new_port = url.split(":")[-1].split("/")[0]
+            print("Hosting at port", new_port)
 
     if verbose:
         print("Workers:", workers)
@@ -227,7 +232,7 @@ def xr_stack_geotifs(
     Stack single or multi-band GeoTiFFs to reference_geotiff.
     Returns out-of-memory dask array, unless resampling occurs.
 
-    Optionally, set save_to_nc true when resmapling is required to
+    Optionally, set save_to_nc true when resampling is required to
     return an out-of-memory dask array.
     Inputs
     ----------
