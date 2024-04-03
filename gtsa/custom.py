@@ -64,25 +64,39 @@ def func(ds, variable_name="band1"):
     # prediction_time_series = np.array(sorted(prediction_time_series))
 
     ## Select by coverage
-    # pct_coverage_csv = "/Users/knuth/Documents/data/dems/south-cascade/DEMs_combined/pct_coverage_2013-2015_ref.csv"
-    pct_coverage_csv = "/Users/knuth/Documents/data/dems/south-cascade/DEMs_combined/pct_coverage_2015_ref.csv"
+    pct_coverage_csv = "/Users/knuth/Documents/data/dems/south-cascade/DEMs_combined/pct_coverage_2013-2015_ref.csv"
+    # pct_coverage_csv = "/Users/knuth/Documents/data/dems/south-cascade/DEMs_combined/pct_coverage_2015_ref.csv"
+    # pct_coverage_csv = "/Users/knuth/Documents/data/dems/south-cascade/DEMs_USGS/pct_coverage_2013-2015_ref.csv"
     pct_coverage_df = pd.read_csv(pct_coverage_csv)
     pct_coverage_df["date"] = pd.to_datetime(pct_coverage_df["dem"])
     selection_dates_all = pct_coverage_df["date"].values
 
-    # select by percent coverage + first and last full coverage
-    pct_coverage_df_full = pct_coverage_df[pct_coverage_df["pct_coverage"] > 0.95]
-    selection_dates_full = pct_coverage_df_full["date"].values
-    pct_coverage_df_partial = pct_coverage_df[pct_coverage_df["pct_coverage"] <= 0.95]
-    selection_dates_partial = pct_coverage_df_partial["date"].values
+    # # select by percent coverage + first and last full coverage
+    # pct_coverage_df_full = pct_coverage_df[pct_coverage_df["pct_coverage"] > 0.95]
+    # selection_dates_full = pct_coverage_df_full["date"].values
+    # pct_coverage_df_partial = pct_coverage_df[pct_coverage_df["pct_coverage"] <= 0.95]
+    # selection_dates_partial = pct_coverage_df_partial["date"].values
+
+    # pct_coverage_csv = "/Users/knuth/Documents/data/dems/south-cascade/DEMs_USGS/pct_coverage_2013-2015_ref.csv"
+    # pct_coverage_df = pd.read_csv(pct_coverage_csv)
+    # pct_coverage_df["date"] = pd.to_datetime(pct_coverage_df["dem"])
+    # pct_coverage_df_usgs = pct_coverage_df.copy()
+
+    # pct_coverage_csv = "/Users/knuth/Documents/data/dems/south-cascade/DEMs_HSfM/pct_coverage_2013-2015_ref.csv"
+    # pct_coverage_df = pd.read_csv(pct_coverage_csv)
+    # pct_coverage_df["date"] = pd.to_datetime(pct_coverage_df["dem"])
+    # pct_coverage_df_hsfm = pct_coverage_df.copy()
+
+    # selection_dates_all = sorted(set(list(pct_coverage_df_usgs['date'].values) + list(pct_coverage_df_hsfm['date'].values)))
 
     selection_dates = list(selection_dates_all)
     # selection_dates = list(selection_dates_full)
     # selection_dates = list(selection_dates_partial)
     # selection_dates = list([selection_dates_full[0],]) + list(selection_dates_partial) + list([selection_dates_full[-1],])
 
-    # nmads_csv = "/Users/knuth/Documents/data/dems/south-cascade/DEMs_combined/nmads_2013-2015_ref.csv"
-    nmads_csv = "/Users/knuth/Documents/data/dems/south-cascade/DEMs_combined/nmads_2015_ref.csv"
+    nmads_csv = "/Users/knuth/Documents/data/dems/south-cascade/DEMs_combined/nmads_2013-2015_ref.csv"
+    # nmads_csv = "/Users/knuth/Documents/data/dems/south-cascade/DEMs_combined/nmads_2015_ref.csv"
+    # nmads_csv = "/Users/knuth/Documents/data/dems/south-cascade/DEMs_USGS/nmads_2013-2015_ref.csv"
     nmad_df = pd.read_csv(nmads_csv)
     nmad_df["date"] = pd.to_datetime(nmad_df["dem"])
     nmad_df = nmad_df.set_index("date")
@@ -93,6 +107,9 @@ def func(ds, variable_name="band1"):
     selection_dates = [pd.to_datetime(x) for x in selection_dates]
     selection_dates = [gtsa.utils.date_time_to_decyear(x) for x in selection_dates]
     ds = ds.sel(time=selection_dates, method="nearest")
+
+    a = sorted(list(selection_dates) + list(prediction_time_series))
+    prediction_time_series = np.array(a)
 
     result = gtsa.temporal.dask_apply_GPR(
         ds[variable_name],
