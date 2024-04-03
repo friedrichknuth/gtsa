@@ -83,11 +83,8 @@ def dask_GPR(
     elif len(alpha) == len(DataArray):
         alphas = alpha
 
-    # else:
-    #     print(len(DataArray))
-    #     print(len(alpha))
-
     mask = np.isfinite(DataArray)
+    full_mask = mask.copy()
 
     data_array = DataArray[mask]
     time_array = times[mask]
@@ -99,31 +96,32 @@ def dask_GPR(
         #                                     data_array,
         #                                     threshold = 200)
 
-        mask = gtsa.filters.mask_outliers_gaussian_process(
+        filt_mask = gtsa.filters.mask_outliers_gaussian_process(
             time_array, data_array, alpha_array
         )
-        data_array = data_array[mask]
-        time_array = time_array[mask]
-        alpha_array = alpha_array[mask]
+        data_array = data_array[filt_mask]
+        time_array = time_array[filt_mask]
+        alpha_array = alpha_array[filt_mask]
+        full_mask[mask] = filt_mask
 
     if count_thresh:
         if np.sum(mask) < count_thresh:
             a = prediction_time_series.copy()
             a[:] = np.nan
-            return a, a
+            return a, a , full_mask
 
     if time_delta_min:
         time_delta = max(time_array) - min(time_array)
         if time_delta < time_delta_min:
             a = prediction_time_series.copy()
             a[:] = np.nan
-            return a, a
+            return a, a , full_mask
 
     model = GPR_model(time_array, data_array, kernel, alpha=alpha_array)
 
     mean_prediction, std_prediction = GPR_predict(model, prediction_time_series)
 
-    return mean_prediction, std_prediction
+    return mean_prediction, std_prediction, full_mask
 
 
 def dask_apply_GPR(DataArray, dim, kwargs=None):
@@ -132,14 +130,21 @@ def dask_apply_GPR(DataArray, dim, kwargs=None):
         DataArray,
         kwargs=kwargs,
         input_core_dims=[[dim]],
-        output_core_dims=[["new_time"], ["new_time"]],
-        output_sizes={"new_time": len(kwargs["prediction_time_series"])},
-        output_dtypes=[float, float],
+        output_core_dims=[["new_time"], ["new_time"], ["input_time"]],
+        dask_gufunc_kwargs=dict(output_sizes={"new_time": len(kwargs["prediction_time_series"]),
+                                              "input_time": len(kwargs["times"])}),
+        output_dtypes=[float, float, bool],
         vectorize=True,
         dask="parallelized",
     )
 
-    mean_prediction, std_prediction = results
+    mean_prediction, std_prediction, mask = results
+
+    mask = mask.assign_coords(
+        {"input_time": kwargs["times"]}
+    )
+    mask = mask.transpose("input_time", "y", "x")
+
     mean_prediction = mean_prediction.rename({"new_time": "time"})
     mean_prediction = mean_prediction.assign_coords(
         {"time": kwargs["prediction_time_series"]}
@@ -160,7 +165,9 @@ def dask_apply_GPR(DataArray, dim, kwargs=None):
     )
 
     ds = xr.Dataset(
-        {"mean_prediction": mean_prediction, "std_prediction": std_prediction}
+        {"mean_prediction": mean_prediction, 
+        "std_prediction": std_prediction,
+        "mask":mask}
     )
 
     return ds
