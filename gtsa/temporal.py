@@ -6,6 +6,48 @@ import xarray as xr
 from gtsa import utils
 
 
+
+
+def error_wrapper(da, reference_raster, glacier_mask):
+    # da is the data array for a single time step (2D array)
+    # reference_raster is a xdem.DEM object
+    # glacier_mask is a xdem.DEM object
+
+    # If the data array is all NaNs, return NaN
+    if np.all(~np.isfinite(da)):
+        return np.nan
+    # Otherwise, calculate the uncertainty with xDEM
+    else:
+        dem = xdem.DEM.from_array(da, transform=reference_raster.transform, crs=reference_raster.crs)
+        uncertainty, variogram = dem.estimate_uncertainty(reference_raster, stable_terrain=glacier_mask)
+        return uncertainty.data.data
+
+
+def calculate_error(da, xdem, glacier_mask, chunk_size=(100, 100)):
+    # da is the xarray.DataArray object
+    # xdem is the xdem.DEM object
+    # glacier_mask is the xdem.DEM object
+
+    # Ensure the dataset is not chunked in time
+    da = ds.chunk({"time": -1, "x": chunk_size[0], "y": chunk_size[1]})
+    # Initialize the error array
+    error = np.zeros(da.shape[0])
+
+    # Loop through each time step
+    for i in tqdm(range(da.shape[0])):
+        # The error computation might not work if no stable ground pixels are present
+        try:
+            test = error_wrapper(da.isel(time=i).values, xdem.DEM(reference_raster), glacier_mask) # Calculate the uncertainty
+            error[i] = np.nanmean(test) # Store the mean uncertainty for the slice (time step)
+        except:
+            error[i] = np.nan # If the computation fails, store NaN
+            print(f"Failed for {i}") # Print the time step that failed
+
+    error[np.isnan(error)] = np.nanmean(error) # Replace NaNs with the mean uncertainty
+
+    return error
+
+
 def create_prediction_timeseries(
     start_date="2000-01-01", end_date="2023-01-01", dt="M"
 ):
@@ -33,17 +75,26 @@ def dask_nmad(DataArray, dim="time"):
     return result
 
 
-def GPR_model(X_train, y_train, kernel, alpha=2):
+def GPR_model(X_train, y_train, kernel, alpha=2, iterations=False, n_iter=0):
     X_train = X_train.squeeze()[:, np.newaxis]
     y_train = y_train.squeeze()
 
-    gaussian_process_model = GaussianProcessRegressor(
-        kernel=kernel,
-        normalize_y=True,
-        alpha=alpha,
-        n_restarts_optimizer=0,
-        optimizer=None,
-    )
+    if iterations:
+        gaussian_process_model = GaussianProcessRegressor(
+            kernel=kernel,
+            normalize_y=True,
+            alpha=alpha**2, # As recommended by the scikit-learn documentation https://scikit-learn.org/stable/auto_examples/gaussian_process/plot_gpr_noisy_targets.html
+            n_restarts_optimizer=n_iter,
+            optimizer='fmin_l_bfgs_b',
+        )
+    else:
+         gaussian_process_model = GaussianProcessRegressor(
+            kernel=kernel,
+            normalize_y=True,
+            alpha=alpha**2, # As recommended by the scikit-learn documentation https://scikit-learn.org/stable/auto_examples/gaussian_process/plot_gpr_noisy_targets.html
+            n_restarts_optimizer=n_iter,
+            optimizer=None,
+        )       
 
     gaussian_process_model = gaussian_process_model.fit(X_train, y_train)
     return gaussian_process_model
@@ -62,20 +113,22 @@ def dask_GPR(
     kernel=None,
     prediction_time_series=None,
     alpha=2,
+    iterations=False,
+    n_iter=0,
     count_thresh=3,
     time_delta_min=None,
 ):
     # assign array of uncertainty values for each data point
     if isinstance(alpha, numbers.Number):
-        alphas = np.full(len(DataArray), alpha)
+        alpha = np.full(len(DataArray), alpha)
     elif len(alpha) == len(DataArray):
-        alphas = alpha
+        alpha = alpha
 
     mask = np.isfinite(DataArray)
 
     data_array = DataArray[mask]
     time_array = times[mask]
-    alpha_array = alphas[mask]
+    alpha_array = alpha[mask]
 
     if count_thresh:
         if np.sum(mask) < count_thresh:
@@ -90,7 +143,7 @@ def dask_GPR(
             a[:] = np.nan
             return a, a
 
-    model = GPR_model(time_array, data_array, kernel, alpha=alpha_array)
+    model = GPR_model(time_array, data_array, kernel, alpha=alpha_array, iterations=iterations, n_iter=n_iter)
 
     mean_prediction, std_prediction = GPR_predict(model, prediction_time_series)
 
