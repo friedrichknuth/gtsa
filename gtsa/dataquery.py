@@ -97,7 +97,7 @@ def download_historical_data(
         for link in soup.find_all("a"):
             url = link.get("href")
             if url:
-                if product_key in url and site in url and 'files' in url:
+                if product_key in url and site in url and "files" in url:
                     urls.append(base + url[1:])
         urls = sorted(set(urls))
         outputs = [

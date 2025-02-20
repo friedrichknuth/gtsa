@@ -116,8 +116,7 @@ def plot_cogs_sites(
         )
         m.add_child(minimap)
 
-    plugins.Draw(export=True,
-                 position = 'topleft').add_to(m)
+    plugins.Draw(export=True, position="topleft").add_to(m)
 
     if verbose:
         print("map center:", map_center_lon, map_center_lat)
@@ -195,9 +194,8 @@ def plot_cogs(
         )
         m.add_child(minimap)
 
-    plugins.Draw(export=True,
-                 position = 'topleft').add_to(m)
-    
+    plugins.Draw(export=True, position="topleft").add_to(m)
+
     if verbose:
         print("map center:", map_center_lon, map_center_lat)
 
@@ -250,8 +248,7 @@ def plot_cog(
         attr=cog_attribution,
     ).add_to(m)
 
-    plugins.Draw(export=True,
-                 position = 'topleft').add_to(m)
+    plugins.Draw(export=True, position="topleft").add_to(m)
 
     if html_file_name:
         m.save(html_file_name)

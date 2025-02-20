@@ -1,6 +1,7 @@
 import numpy as np
 import xarray as xr
 import pandas as pd
+import dask
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import (
     RBF,
@@ -13,31 +14,40 @@ from sklearn.gaussian_process.kernels import (
 )
 import gtsa
 
-def func(ds, variable_name="band1"):
 
+def func(ds, variable_name="band1"):
 
     kernel = gtsa.temporal.GPR_glacier_kernel()
     # kernel = gtsa.temporal.GPR_kernel_smoother()
 
     # Create time series for predictions
-    prediction_time_series = gtsa.temporal.create_prediction_timeseries(start_date = '1967-09-01',
-                                               end_date = '1997-09-01',
-                                               dt ='YE-SEP')
-    alphas = 2
+    prediction_time_series = gtsa.temporal.create_prediction_timeseries(
+        start_date="1967-09-01", end_date="1997-09-01", dt="YE-SEP"
+    )
+
+    uncertainty_array = dask.array.full_like(
+        ds[variable_name].values, 2, chunks=(-1, "auto", "auto")
+    )
+
+    uncertainty_ds = xr.Dataset(
+        {
+            "uncertainty": (["time", "y", "x"], uncertainty_array),
+        },
+        coords={"time": ds.time.values, "y": ds.y.values, "x": ds.x.values},
+    )
+
+    ds = xr.merge([ds, uncertainty_ds])
 
     result = gtsa.temporal.dask_apply_GPR(
-        ds[variable_name],
-        "time",
+        ds,
         kwargs={
-            "times": ds[variable_name].time.values,
             "kernel": kernel,
             "prediction_time_series": prediction_time_series,
-            "alpha":alphas,
-            "apply_filter": True,
+            "apply_filter": False,
         },
     )
-    return result
 
+    return result
 
 
 # def func(ds, variable_name="band1"):

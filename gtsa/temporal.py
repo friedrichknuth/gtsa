@@ -17,7 +17,10 @@ import gtsa
 
 
 def create_prediction_timeseries(
-    start_date="2000-01-01", end_date="2023-01-01", dt="M", offset=0,
+    start_date="2000-01-01",
+    end_date="2023-01-01",
+    dt="M",
+    offset=0,
 ):
     d = pd.date_range(start_date, end_date, freq=dt) + pd.DateOffset(days=offset)
     X = d.to_series().apply([utils.date_time_to_decyear]).values.squeeze()
@@ -68,27 +71,28 @@ def GPR_predict(gaussian_process_model, X):
 
 
 def dask_GPR(
-    DataArray,
-    times=None,
+    time_array,
+    data_array,
+    alpha_array,
     kernel=None,
+    times=None,
     prediction_time_series=None,
-    alpha=2,
     count_thresh=3,
     time_delta_min=None,
     apply_filter=False,
 ):
     # assign array of uncertainty values for each data point
-    if isinstance(alpha, numbers.Number):
-        alphas = np.full(len(DataArray), alpha)
-    elif len(alpha) == len(DataArray):
-        alphas = alpha
+    # if isinstance(alpha, numbers.Number):
+    #     alphas = np.full(len(data_array), alpha)
+    # elif len(alpha) == len(data_array):
+    #     alphas = alpha
 
-    mask = np.isfinite(DataArray)
+    mask = np.isfinite(data_array)
     full_mask = mask.copy()
 
-    data_array = DataArray[mask]
-    time_array = times[mask]
-    alpha_array = alphas[mask]
+    data_array = data_array[mask]
+    time_array = time_array[mask]
+    alpha_array = alpha_array[mask]
 
     if apply_filter and np.sum(mask) > count_thresh:
         # print(np.sum(mask))
@@ -108,14 +112,14 @@ def dask_GPR(
         if np.sum(mask) < count_thresh:
             a = prediction_time_series.copy()
             a[:] = np.nan
-            return a, a , full_mask
+            return a, a, full_mask
 
     if time_delta_min:
         time_delta = max(time_array) - min(time_array)
         if time_delta < time_delta_min:
             a = prediction_time_series.copy()
             a[:] = np.nan
-            return a, a , full_mask
+            return a, a, full_mask
 
     model = GPR_model(time_array, data_array, kernel, alpha=alpha_array)
 
@@ -124,15 +128,21 @@ def dask_GPR(
     return mean_prediction, std_prediction, full_mask
 
 
-def dask_apply_GPR(DataArray, dim, kwargs=None):
+def dask_apply_GPR(ds, variable_name="band1", alphas_name="uncertainty", kwargs=None):
     results = xr.apply_ufunc(
         dask_GPR,
-        DataArray,
+        ds["time"],
+        ds[variable_name],
+        ds[alphas_name],
         kwargs=kwargs,
-        input_core_dims=[[dim]],
+        input_core_dims=[["time"], ["time"], ["time"]],
         output_core_dims=[["new_time"], ["new_time"], ["input_time"]],
-        dask_gufunc_kwargs=dict(output_sizes={"new_time": len(kwargs["prediction_time_series"]),
-                                              "input_time": len(kwargs["times"])}),
+        dask_gufunc_kwargs=dict(
+            output_sizes={
+                "new_time": len(kwargs["prediction_time_series"]),
+                "input_time": len(ds["time"].values),
+            }
+        ),
         output_dtypes=[float, float, bool],
         vectorize=True,
         dask="parallelized",
@@ -140,9 +150,7 @@ def dask_apply_GPR(DataArray, dim, kwargs=None):
 
     mean_prediction, std_prediction, mask = results
 
-    mask = mask.assign_coords(
-        {"input_time": kwargs["times"]}
-    )
+    mask = mask.assign_coords({"input_time": ds["time"].values})
     mask = mask.transpose("input_time", "y", "x")
 
     mean_prediction = mean_prediction.rename({"new_time": "time"})
@@ -165,9 +173,11 @@ def dask_apply_GPR(DataArray, dim, kwargs=None):
     )
 
     ds = xr.Dataset(
-        {"mean_prediction": mean_prediction, 
-        "std_prediction": std_prediction,
-        "mask":mask}
+        {
+            "mean_prediction": mean_prediction,
+            "std_prediction": std_prediction,
+            "mask": mask,
+        }
     )
 
     return ds
