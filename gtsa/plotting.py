@@ -17,6 +17,7 @@ def plot_cogs_sites(
     basemap_opacity=0.8,
     basemap_attribution="Google Earth",
     minimap=True,
+    draw=True,
     layer_control=True,
     fullscreen=True,
     verbose=False,
@@ -98,7 +99,11 @@ def plot_cogs_sites(
             name=site_marker_names[i],
             icon=site_icon,
         ).add_to(m).add_to(feature_group)
-
+        
+    if draw:
+        draw = plugins.Draw(export=True)
+        draw.add_to(m)
+        
     if fullscreen:
         plugins.Fullscreen(
             position="topleft",
@@ -141,6 +146,7 @@ def plot_cogs(
     basemap_opacity=0.8,
     basemap_attribution="Google Earth",
     minimap=True,
+    draw=True,
     layer_control=True,
     fullscreen=True,
     verbose=False,
@@ -175,6 +181,11 @@ def plot_cogs(
             name=cog_names[i],
             attr=cogs_attribution,
         ).add_to(m)
+
+    if draw:
+        draw = plugins.Draw(export=True)
+        draw.add_to(m)
+        
     if fullscreen:
         plugins.Fullscreen(
             position="topleft",
@@ -213,6 +224,7 @@ def plot_cog(
     basemap_tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
     basemap_opacity=0.8,
     basemap_attribution="Google Earth",
+    draw=True,
     map_center_lon = None, 
     map_center_lat = None,
     show=True,
@@ -248,7 +260,11 @@ def plot_cog(
         name=cog_name,
         attr=cog_attribution,
     ).add_to(m)
-
+    
+    if draw:
+        draw = plugins.Draw(export=True)
+        draw.add_to(m)
+        
     if html_file_name:
         m.save(html_file_name)
 
