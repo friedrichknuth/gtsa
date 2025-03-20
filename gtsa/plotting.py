@@ -213,13 +213,16 @@ def plot_cog(
     basemap_tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
     basemap_opacity=0.8,
     basemap_attribution="Google Earth",
+    map_center_lon = None, 
+    map_center_lat = None,
+    show=True,
 ):
     """
     Plots Cloud Optimized GeoTIFFs (COG) on interactive Folium map.
     """
     # TODO add check that cog is in EPSG:4326
 
-    map_center_lon, map_center_lat = geospatial._get_raster_centroid(cog_url)
+
 
     virtual_tiles = f"{tiler}?url={cog_url}"
     if expression:
@@ -227,6 +230,8 @@ def plot_cog(
 
     m = folium_map_object
     if not m:
+        if not map_center_lon or not map_center_lat:
+            map_center_lon, map_center_lat = geospatial._get_raster_centroid(cog_url)
         m = _initialize_folium_map(
             map_center_lon,
             map_center_lat,
@@ -239,7 +244,7 @@ def plot_cog(
     folium.TileLayer(
         tiles=virtual_tiles,
         overlay=True,
-        show=True,
+        show=show,
         name=cog_name,
         attr=cog_attribution,
     ).add_to(m)
