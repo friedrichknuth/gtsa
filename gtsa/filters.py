@@ -42,7 +42,7 @@ def mask_outliers_rate_of_change(x_values, y_values, threshold=100):
     return mask
 
 
-def mask_outliers_gaussian_process(x_values, y_values, alpha_values):
+def mask_outliers_gaussian_process(x_values, y_values, alpha_values, normalize_y=True):
     mask = np.ma.make_mask(x_values)
     masked_values = []
     kernel = gtsa.temporal.GPR_kernel_smoother()
@@ -51,8 +51,11 @@ def mask_outliers_gaussian_process(x_values, y_values, alpha_values):
     c = 0
     factor = 2
     while c == 0:
+        if np.sum(mask) < 1:
+            break
+            
         gaussian_process_model = gtsa.temporal.GPR_model(
-            x_values[mask], y_values[mask], kernel, alpha=alpha_values[mask]
+            x_values[mask], y_values[mask], kernel, alpha=alpha_values[mask], normalize_y = normalize_y
         )
 
         mean_prediction, std_prediction = gtsa.temporal.GPR_predict(

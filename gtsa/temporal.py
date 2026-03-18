@@ -46,13 +46,13 @@ def dask_nmad(DataArray, dim="time"):
     return result
 
 
-def GPR_model(X_train, y_train, kernel, alpha=2):
+def GPR_model(X_train, y_train, kernel, alpha=2, normalize_y = True):
     X_train = X_train.squeeze()[:, np.newaxis]
     y_train = y_train.squeeze()
 
     gaussian_process_model = GaussianProcessRegressor(
         kernel=kernel,
-        normalize_y=True,
+        normalize_y=normalize_y,
         alpha=alpha,
         n_restarts_optimizer=0,
         optimizer=None,
@@ -80,6 +80,7 @@ def dask_GPR(
     count_thresh=3,
     time_delta_min=None,
     apply_filter=False,
+    normalize_y=True,
 ):
     # assign array of uncertainty values for each data point
     # if isinstance(alpha, numbers.Number):
@@ -93,7 +94,12 @@ def dask_GPR(
     data_array = data_array[mask]
     time_array = time_array[mask]
     alpha_array = alpha_array[mask]
-
+    
+    if np.all(~np.isfinite(data_array)):
+        a = prediction_time_series.copy()
+        a[:] = np.nan
+        return a, a, full_mask
+        
     if apply_filter and np.sum(mask) > count_thresh:
         # print(np.sum(mask))
         # mask = gtsa.filters.mask_outliers_rate_of_change(time_array,
@@ -109,7 +115,7 @@ def dask_GPR(
         full_mask[mask] = filt_mask
 
     if count_thresh:
-        if np.sum(mask) < count_thresh:
+        if len(data_array) < count_thresh:
             a = prediction_time_series.copy()
             a[:] = np.nan
             return a, a, full_mask
@@ -121,7 +127,12 @@ def dask_GPR(
             a[:] = np.nan
             return a, a, full_mask
 
-    model = GPR_model(time_array, data_array, kernel, alpha=alpha_array)
+    if np.all(~np.isfinite(data_array)):
+        a = prediction_time_series.copy()
+        a[:] = np.nan
+        return a, a, full_mask
+
+    model = GPR_model(time_array, data_array, kernel, alpha=alpha_array, normalize_y=normalize_y)
 
     mean_prediction, std_prediction = GPR_predict(model, prediction_time_series)
 
