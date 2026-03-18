@@ -75,12 +75,14 @@ def dask_GPR(
     data_array,
     alpha_array,
     kernel=None,
+    kernel_factory=None,
     times=None,
     prediction_time_series=None,
     count_thresh=3,
     time_delta_min=None,
     apply_filter=False,
     normalize_y=True,
+    center_time=False,
 ):
     # assign array of uncertainty values for each data point
     # if isinstance(alpha, numbers.Number):
@@ -131,6 +133,16 @@ def dask_GPR(
         a = prediction_time_series.copy()
         a[:] = np.nan
         return a, a, full_mask
+
+    # Build kernel from factory if provided (data-dependent kernels)
+    if kernel_factory is not None:
+        kernel = kernel_factory(time_array, data_array, alpha_array)
+
+    # Centre time axis around mean (needed for linear-kernel stability)
+    if center_time:
+        mu_x = np.nanmean(time_array)
+        time_array = time_array - mu_x
+        prediction_time_series = prediction_time_series - mu_x
 
     model = GPR_model(time_array, data_array, kernel, alpha=alpha_array, normalize_y=normalize_y)
 
@@ -240,13 +252,62 @@ def GPR_glacier_kernel():
     #     kernel = RBF(5) + RBF(20) + RBF(100) * PairwiseKernel(1, metric='linear')
 
 
-def GPR_pyddem_kernel():
+def GPR_pyddem_kernel(time_vals=None, data_vals=None, err_vals=None):
     """
+    Adaptation of the pyddem final_fit kernel.
     https://github.com/iamdonovan/pyddem/blob/main/pyddem/fit_tools.py#L1147
+
+    When called with no arguments, returns the kernel with static
+    default hyperparameters (backward-compatible).
+
+    When called with per-pixel data, computes data-dependent
+    hyperparameters following the pyddem final_fit logic:
+      - nonlin_var  = mean(err) + (RMSE / standardized_RMSE)^2
+      - period_nonlinear = min(100, 100 / standardized_RMSE^2)
+
+    Parameters
+    ----------
+    time_vals : array-like or None
+        Decimal-year time values (after outlier filtering).
+    data_vals : array-like or None
+        Elevation values (after outlier filtering).
+    err_vals : array-like or None
+        Squared uncertainties (variance), i.e. uncertainty**2.
+
+    Returns
+    -------
+    kernel : sklearn kernel
     """
     base_var = 50.0
-    period_nonlinear = 100.0  # 20 to 100
-    nonlin_var = 500  # or MSE from linear fit
+
+    if (time_vals is not None
+            and data_vals is not None
+            and err_vals is not None
+            and len(time_vals) >= 2):
+        # Weighted least-squares linear fit (pyddem wls_matrix equivalent)
+        w = 1.0 / np.asarray(err_vals, dtype=float)
+        t = np.asarray(time_vals, dtype=float)
+        d = np.asarray(data_vals, dtype=float)
+        w_sum = w.sum()
+        w_x = (w * t).sum() / w_sum
+        w_y = (w * d).sum() / w_sum
+        beta1 = ((w * (t - w_x) * (d - w_y)).sum()
+                 / (w * (t - w_x) ** 2).sum())
+        beta0 = w_y - beta1 * w_x
+        residuals = d - (beta0 + beta1 * t)
+        res = np.sqrt(np.mean(residuals ** 2))
+        res_stdized = np.sqrt(np.mean(residuals ** 2 / np.asarray(err_vals, dtype=float)))
+
+        if res_stdized != 0:
+            nonlin_var = np.mean(err_vals) + (res / res_stdized) ** 2
+            period_nonlinear = min(100.0, 100.0 / res_stdized ** 2)
+        else:
+            nonlin_var = np.mean(err_vals)
+            period_nonlinear = 100.0
+    else:
+        # Static defaults (original behaviour)
+        period_nonlinear = 100.0
+        nonlin_var = 500
 
     k1 = PairwiseKernel(1, metric="linear")
     k2 = ConstantKernel(30) * ExpSineSquared(length_scale=1, periodicity=1)
