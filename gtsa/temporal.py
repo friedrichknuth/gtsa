@@ -144,9 +144,20 @@ def dask_GPR(
         time_array = time_array - mu_x
         prediction_time_series = prediction_time_series - mu_x
 
+    # When normalize_y=False, manually subtract data mean before fitting
+    # and add it back after prediction (matching pyddem behaviour).
+    # When normalize_y=True, sklearn handles this internally.
+    mu_y = 0.0
+    if not normalize_y:
+        mu_y = np.nanmean(data_array)
+        data_array = data_array - mu_y
+
     model = GPR_model(time_array, data_array, kernel, alpha=alpha_array, normalize_y=normalize_y)
 
     mean_prediction, std_prediction = GPR_predict(model, prediction_time_series)
+
+    if not normalize_y:
+        mean_prediction = mean_prediction + mu_y
 
     return mean_prediction, std_prediction, full_mask
 
